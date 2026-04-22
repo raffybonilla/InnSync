@@ -13,6 +13,18 @@ export default function Home() {
           >
             User Login / Register
           </a>
+          <a
+            href="/auth/admin"
+            className="px-8 py-3 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition"
+          >
+            Admin / Manager Login
+          </a>
+          <a
+            href="/auth/staff"
+            className="px-8 py-3 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition"
+          >
+            Staff Login
+          </a>
         </div>
       </div>
     </div>

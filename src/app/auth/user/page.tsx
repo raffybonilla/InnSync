@@ -74,6 +74,7 @@ export default function UserLogin() {
             data: {
               full_name: formData.fullName,
               username: formData.username,
+              role: 'user',
             },
           },
         });
