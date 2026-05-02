@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import HotelCard from '@/components/HotelCard';
 
 interface User {
   id: number;
@@ -9,10 +10,25 @@ interface User {
   email: string;
 }
 
+interface Hotel {
+  id: number;
+  name: string;
+  hotel_name: string;
+  price_per_night: number;
+  rating: number;
+  reviews: number;
+  images: string[];
+  description: string;
+  max_guests: number;
+  room_size: string;
+}
+
 export default function UserDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hotelsLoading, setHotelsLoading] = useState(true);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -23,6 +39,27 @@ export default function UserDashboard() {
     setUser(JSON.parse(userStr));
     setLoading(false);
   }, [router]);
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        setHotelsLoading(true);
+        const response = await fetch('/api/hotels');
+        const data = await response.json();
+        if (data.hotels) {
+          setHotels(data.hotels);
+        }
+      } catch (error) {
+        console.error('Error fetching hotels:', error);
+      } finally {
+        setHotelsLoading(false);
+      }
+    };
+
+    if (!loading) {
+      fetchHotels();
+    }
+  }, [loading]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -50,7 +87,7 @@ export default function UserDashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <div className="bg-white shadow rounded-lg p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Welcome, {user?.username}!</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -60,6 +97,24 @@ export default function UserDashboard() {
               <p className="text-gray-600">Email: <span className="font-semibold">{user?.email}</span></p>
             </div>
           </div>
+        </div>
+
+        {/* Featured Hotel Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Hotel For You</h2>
+          {hotelsLoading ? (
+            <div className="bg-white shadow rounded-lg p-8 text-center">
+              <p className="text-gray-500">Loading hotels...</p>
+            </div>
+          ) : hotels.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+              <HotelCard hotel={hotels[0]} />
+            </div>
+          ) : (
+            <div className="bg-white shadow rounded-lg p-8 text-center">
+              <p className="text-gray-500">No hotels available at the moment</p>
+            </div>
+          )}
         </div>
 
         {/* Features */}
