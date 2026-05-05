@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function UserLogin() {
   const router = useRouter();
@@ -11,7 +11,6 @@ export default function UserLogin() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -37,8 +36,6 @@ export default function UserLogin() {
     setError("");
 
     try {
-      const supabase = createSupabaseClient();
-
       if (isLogin) {
         if (!formData.email || !formData.password) {
           setError("Email and password are required.");
@@ -101,9 +98,7 @@ export default function UserLogin() {
         }
 
         if (data.user) {
-          alert(
-            "Registration successful. Please check your email to confirm."
-          );
+          alert("Registration successful. Please check your email to confirm.");
 
           setFormData({
             username: "",
@@ -115,8 +110,8 @@ export default function UserLogin() {
           setIsLogin(true);
         }
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "An error occurred. Please try again.");
     }
 
     setLoading(false);
@@ -124,6 +119,7 @@ export default function UserLogin() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+
       <div className="flex w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
 
         {/* LEFT SIDE */}
@@ -195,12 +191,9 @@ export default function UserLogin() {
               disabled={loading}
               className="w-full bg-black text-white py-2 rounded"
             >
-              {loading
-                ? "Loading..."
-                : isLogin
-                ? "Sign In"
-                : "Register"}
+              {loading ? "Loading..." : isLogin ? "Sign In" : "Register"}
             </button>
+
           </form>
 
           <button
@@ -209,6 +202,7 @@ export default function UserLogin() {
           >
             {isLogin ? "Create account" : "Back to login"}
           </button>
+
         </div>
 
         {/* RIGHT SIDE */}
@@ -223,6 +217,7 @@ export default function UserLogin() {
         </div>
 
       </div>
+
     </div>
   );
 }
