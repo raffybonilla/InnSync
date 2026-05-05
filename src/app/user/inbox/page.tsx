@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function InboxPage() {
+  const router = useRouter();
+
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [showNewChat, setShowNewChat] = useState(false);
 
@@ -10,37 +13,55 @@ export default function InboxPage() {
     {
       id: 1,
       name: "Hotel Cebu Grand",
-      message: "Your room is ready for check-in.",
-      time: "2 mins ago",
+      handler: "Juan D. Cruz",
+      messages: [
+        { sender: "hotel", text: "Your room is ready for check-in." },
+        { sender: "user", text: "Okay thank you!" },
+      ],
     },
     {
       id: 2,
-      name: "Shangri-La Cebu Staff",
-      message: "Do you need airport pickup?",
-      time: "1 hour ago",
+      name: "Shangri-La Cebu",
+      handler: "Maria S. Reyes",
+      messages: [
+        { sender: "hotel", text: "Do you need airport pickup?" },
+        { sender: "user", text: "Yes please." },
+      ],
     },
     {
       id: 3,
       name: "Radisson Blu",
-      message: "Your booking has been confirmed.",
-      time: "Yesterday",
+      handler: "Carlos M. Lim",
+      messages: [
+        { sender: "hotel", text: "Your booking has been confirmed." },
+        { sender: "user", text: "Nice!" },
+      ],
     },
   ];
+
+  const activeChat = chats.find((c) => c.id === selectedChat);
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
 
-      {/* LEFT CHAT LIST */}
+      {/* LEFT SIDE */}
       <div className="w-1/3 bg-white border-r p-4">
 
-        {/* 🔥 TOP HEADER + NEW CHAT */}
-        <div className="flex justify-between items-center mb-4">
+        {/* HEADER */}
+        <div className="flex items-center gap-2 mb-4">
+
+          <button
+            onClick={() => router.push("/user/dashboard")}
+            className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+          >
+            ← Back
+          </button>
 
           <h1 className="text-xl font-bold">Inbox</h1>
 
           <button
             onClick={() => setShowNewChat(true)}
-            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+            className="ml-auto bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
           >
             + New Chat
           </button>
@@ -48,46 +69,63 @@ export default function InboxPage() {
         </div>
 
         {/* CHAT LIST */}
-        {chats.map((chat) => (
-          <div
-            key={chat.id}
-            onClick={() => setSelectedChat(chat.id)}
-            className="p-3 border-b hover:bg-gray-100 cursor-pointer"
-          >
-            <p className="font-semibold">{chat.name}</p>
-            <p className="text-sm text-gray-500">{chat.message}</p>
-            <p className="text-xs text-gray-400">{chat.time}</p>
-          </div>
-        ))}
+        <div className="flex flex-col">
+
+          {chats.map((chat) => (
+            <button
+              key={chat.id}
+              onClick={() => setSelectedChat(chat.id)}
+              className={`text-left p-3 border-b hover:bg-gray-100 w-full ${
+                selectedChat === chat.id ? "bg-gray-200" : ""
+              }`}
+            >
+              <p className="font-semibold">{chat.name}</p>
+              <p className="text-xs text-gray-500">
+                Handled by {chat.handler}
+              </p>
+            </button>
+          ))}
+
+        </div>
 
       </div>
 
-      {/* RIGHT CHAT VIEW */}
+      {/* RIGHT SIDE */}
       <div className="flex-1 p-6">
 
-        {!selectedChat ? (
+        {!activeChat ? (
           <p className="text-gray-500">
-            Select a conversation to view messages
+            Select a conversation
           </p>
         ) : (
           <div className="bg-white p-5 rounded shadow">
 
-            <h2 className="text-lg font-bold mb-2">
-              Chat opened
+            {/* CHAT HEADER */}
+            <h2 className="text-lg font-bold mb-1">
+              {activeChat.name}
             </h2>
 
-            <div className="space-y-3 mt-4">
+            <p className="text-sm text-gray-500 mb-4">
+              Handled by: {activeChat.handler}
+            </p>
 
-              <div className="bg-gray-100 p-3 rounded">
-                Hello! Your booking is confirmed.
-              </div>
-
-              <div className="bg-blue-100 p-3 rounded ml-auto w-fit">
-                Thank you!
-              </div>
-
+            {/* MESSAGES */}
+            <div className="space-y-3">
+              {activeChat.messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`p-3 rounded w-fit ${
+                    msg.sender === "user"
+                      ? "bg-blue-100 ml-auto"
+                      : "bg-gray-100"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              ))}
             </div>
 
+            {/* INPUT */}
             <div className="mt-4 flex gap-2">
               <input
                 placeholder="Type a message..."
@@ -103,11 +141,11 @@ export default function InboxPage() {
 
       </div>
 
-      {/* 🔥 NEW CHAT MODAL */}
+      {/* NEW CHAT MODAL */}
       {showNewChat && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
 
-          <div className="bg-white w-[90%] max-w-md p-6 rounded shadow">
+          <div className="bg-white w-[90%] max-w-md p-6 rounded">
 
             <h2 className="text-lg font-bold mb-3">
               Start New Chat
@@ -119,7 +157,7 @@ export default function InboxPage() {
             />
 
             <textarea
-              placeholder="Your message..."
+              placeholder="Message..."
               className="w-full border p-2 rounded mb-3"
             />
 
