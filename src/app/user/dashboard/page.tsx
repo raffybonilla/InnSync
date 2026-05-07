@@ -44,6 +44,10 @@ export default function UserDashboard() {
           🏨 Booking History
         </Link>
 
+        <Link href="/user/notifications" className="block hover:text-blue-600">
+          🔔 Notifications
+        </Link>
+
         {/* LOGOUT */}
         <button
           onClick={() => setShowLogout(true)}
@@ -113,34 +117,6 @@ export default function UserDashboard() {
             <p className="text-gray-600 mt-1">
               Browse hotels in Cebu and view details
             </p>
-          </Link>
-
-        </div>
-
-        {/* ================= RECENT BOOKINGS TAB ================= */}
-        <div className="px-6 pb-6">
-
-          <Link
-            href="/user/bookings"
-            className="bg-white p-5 rounded shadow flex items-center justify-between hover:shadow-lg transition"
-          >
-
-            <div>
-
-              <h3 className="font-bold text-lg">
-                🏨 Recent Bookings
-              </h3>
-
-              <p className="text-sm text-gray-500 mt-1">
-                View your hotel booking history
-              </p>
-
-            </div>
-
-            <div className="text-2xl text-gray-400">
-              →
-            </div>
-
           </Link>
 
         </div>
