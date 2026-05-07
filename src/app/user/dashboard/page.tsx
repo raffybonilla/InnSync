@@ -40,7 +40,13 @@ export default function UserDashboard() {
           💰 My Wallet
         </Link>
 
-        {/* ❌ SETTINGS REMOVED */}
+        <Link href="/user/notifications" className="block hover:text-blue-600">
+          🔔 Notifications
+        </Link>
+
+        <Link href="/user/settings" className="block hover:text-blue-600">
+          ⚙ Settings
+        </Link>
 
         {/* logout */}
         <button
@@ -89,7 +95,7 @@ export default function UserDashboard() {
         </div>
 
         {/* QUICK ACTIONS */}
-        <div className="p-6 grid md:grid-cols-1 gap-4">
+        <div className="p-6 grid md:grid-cols-2 gap-4">
 
           <Link
             href="/hotels"
@@ -101,28 +107,44 @@ export default function UserDashboard() {
             </p>
           </Link>
 
+          <Link
+            href="/user/settings"
+            className="bg-white p-6 rounded shadow hover:shadow-lg transition"
+          >
+            <h3 className="text-xl font-bold">⚙ Settings</h3>
+            <p className="text-gray-600 mt-1">
+              Manage account preferences
+            </p>
+          </Link>
+
         </div>
 
         {/* ================= EXTRA SECTIONS ================= */}
 
         <div className="p-6 grid md:grid-cols-2 gap-4">
 
+          {/* Recent Bookings */}
+          <div className="bg-white p-5 rounded shadow">
+            <h3 className="font-bold text-lg mb-2">📌 Recent Bookings</h3>
+            <p className="text-gray-500">No recent bookings yet.</p>
+          </div>
+
           {/* Recommended Hotels */}
           <div className="bg-white p-5 rounded shadow">
             <h3 className="font-bold text-lg mb-2">🏨 Recommended Hotels</h3>
-            <p className="text-gray-500">
-              Top picks for you in Cebu.
-            </p>
+            <p className="text-gray-500">Top picks for you in Cebu.</p>
           </div>
 
-          {/* About Us */}
+          {/* Wallet */}
           <div className="bg-white p-5 rounded shadow">
-            <h3 className="font-bold text-lg mb-2">ℹ️ About Us</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Inn Sync is a modern hotel booking platform designed for travelers in Cebu.
-              We aim to make booking faster, easier, and more reliable with real-time
-              availability, secure payments, and seamless user experience.
-            </p>
+            <h3 className="font-bold text-lg mb-2">💰 Wallet Balance</h3>
+            <p className="text-gray-500">₱0.00</p>
+          </div>
+
+          {/* Notifications */}
+          <div className="bg-white p-5 rounded shadow">
+            <h3 className="font-bold text-lg mb-2">🔔 Notifications</h3>
+            <p className="text-gray-500">No new notifications.</p>
           </div>
 
         </div>
