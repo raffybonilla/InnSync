@@ -18,8 +18,8 @@ export default function WalletPage() {
 
   const [view, setView] = useState<View>("menu");
 
-  const [balance] = useState(1234);
-  const [cashback] = useState(250);
+  const [balance, setBalance] = useState(1234);
+  const [cashback, setCashback] = useState(250);
 
   const transactions: Transaction[] = [
     {
@@ -45,6 +45,29 @@ export default function WalletPage() {
     },
   ];
 
+  const totalWallet = balance + cashback;
+
+  // 🔥 AUTO DEDUCTION LOGIC
+  const deductWallet = (amount: number) => {
+    let total = balance + cashback;
+
+    if (amount > total) {
+      alert("Insufficient wallet balance");
+      return false;
+    }
+
+    let remaining = total - amount;
+
+    let newCashback = Math.min(cashback, remaining);
+    let newBalance = remaining - newCashback;
+
+    setBalance(newBalance);
+    setCashback(newCashback);
+
+    alert("Booking successful! Wallet deducted.");
+    return true;
+  };
+
   const goBack = () => {
     if (view === "menu") {
       router.push("/user/dashboard");
@@ -68,7 +91,7 @@ export default function WalletPage() {
         <h1 className="text-xl font-bold">My Wallet</h1>
       </div>
 
-      {/* ================= MENU VIEW ================= */}
+      {/* MENU */}
       {view === "menu" && (
         <div className="space-y-3">
 
@@ -96,77 +119,74 @@ export default function WalletPage() {
         </div>
       )}
 
-      {/* ================= BALANCE VIEW ================= */}
+      {/* BALANCE */}
       {view === "balance" && (
         <div className="bg-white p-5 rounded-xl shadow">
+
           <h2 className="font-semibold mb-4">💰 Wallet Balance</h2>
 
-          <p className="text-sm text-gray-500">Available Balance</p>
-          <p className="text-2xl font-bold">₱{balance}</p>
+          <p className="text-sm text-gray-500">Total Wallet Balance</p>
+          <p className="text-3xl font-bold">₱{totalWallet}</p>
 
-          <p className="text-sm text-gray-500 mt-3">Cashback</p>
-          <p className="text-2xl font-bold text-green-600">
-            ₱{cashback}
-          </p>
+          <div className="mt-4 border-t pt-3">
+            <div className="flex justify-between">
+              <span>Available Balance</span>
+              <span>₱{balance}</span>
+            </div>
+
+            <div className="flex justify-between mt-1">
+              <span>Cashback</span>
+              <span className="text-green-600">₱{cashback}</span>
+            </div>
+          </div>
+
+          {/* 🔥 TEST BOOK BUTTON (simulate booking deduction) */}
+          <button
+            onClick={() => deductWallet(6000)}
+            className="mt-5 w-full bg-green-600 text-white py-2 rounded"
+          >
+            Test Book (₱6000)
+          </button>
+
         </div>
       )}
 
-      {/* ================= PAYMENT VIEW ================= */}
+      {/* PAYMENT */}
       {view === "payment" && (
         <div className="bg-white p-5 rounded-xl shadow">
           <h2 className="font-semibold mb-4">💳 Payment Options</h2>
 
-          <div className="space-y-2">
-            <button className="w-full p-3 bg-blue-500 text-white rounded-lg">
-              Pay with GCash
-            </button>
+          <button className="w-full p-3 bg-blue-500 text-white rounded-lg">
+            Pay with GCash
+          </button>
 
-            <button className="w-full p-3 bg-gray-800 text-white rounded-lg">
-              Pay with Card
-            </button>
+          <button className="w-full p-3 bg-gray-800 text-white rounded-lg mt-2">
+            Pay with Card
+          </button>
 
-            <button className="w-full p-3 bg-green-600 text-white rounded-lg">
-              Pay with Wallet Balance
-            </button>
-          </div>
+          <button className="w-full p-3 bg-green-600 text-white rounded-lg mt-2">
+            Pay with Wallet
+          </button>
         </div>
       )}
 
-      {/* ================= TRANSACTIONS VIEW ================= */}
+      {/* TRANSACTIONS */}
       {view === "transactions" && (
         <div className="bg-white p-5 rounded-xl shadow">
-          <h2 className="font-semibold mb-4">
-            📜 Transaction History
-          </h2>
+          <h2 className="font-semibold mb-4">📜 Transaction History</h2>
 
-          <div className="space-y-3">
-            {transactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex justify-between border-b pb-2"
-              >
-                <div>
-                  <p className="text-sm font-medium">
-                    {tx.title}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {tx.date}
-                  </p>
-                </div>
-
-                <p
-                  className={
-                    tx.type === "credit"
-                      ? "text-green-600 font-semibold"
-                      : "text-red-500 font-semibold"
-                  }
-                >
-                  {tx.type === "credit" ? "+" : "-"}₱
-                  {Math.abs(tx.amount)}
-                </p>
+          {transactions.map((tx) => (
+            <div key={tx.id} className="flex justify-between border-b py-2">
+              <div>
+                <p className="text-sm font-medium">{tx.title}</p>
+                <p className="text-xs text-gray-500">{tx.date}</p>
               </div>
-            ))}
-          </div>
+
+              <p className={tx.type === "credit" ? "text-green-600" : "text-red-500"}>
+                {tx.type === "credit" ? "+" : "-"}₱{Math.abs(tx.amount)}
+              </p>
+            </div>
+          ))}
         </div>
       )}
 

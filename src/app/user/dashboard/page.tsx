@@ -40,9 +40,11 @@ export default function UserDashboard() {
           💰 My Wallet
         </Link>
 
-        {/* ❌ SETTINGS REMOVED */}
+        <Link href="/user/bookings" className="block hover:text-blue-600">
+          🏨 Booking History
+        </Link>
 
-        {/* logout */}
+        {/* LOGOUT */}
         <button
           onClick={() => setShowLogout(true)}
           className="mt-10 bg-red-500 text-white w-full py-2 rounded hover:bg-red-600"
@@ -57,7 +59,10 @@ export default function UserDashboard() {
 
         {/* HEADER */}
         <div className="bg-white shadow px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold">Dashboard</h2>
+
+          <h2 className="text-xl font-bold">
+            Dashboard
+          </h2>
 
           <Link
             href="/user/profile"
@@ -65,10 +70,12 @@ export default function UserDashboard() {
           >
             My Profile
           </Link>
+
         </div>
 
         {/* HERO */}
         <div className="bg-blue-600 text-white p-10">
+
           <h2 className="text-3xl font-bold">
             Find your perfect stay in Cebu
           </h2>
@@ -78,14 +85,18 @@ export default function UserDashboard() {
           </p>
 
           <div className="mt-5 flex gap-2">
+
             <input
               placeholder="Search hotels..."
               className="w-full p-3 rounded text-black"
             />
+
             <button className="bg-black px-6 rounded">
               Search
             </button>
+
           </div>
+
         </div>
 
         {/* QUICK ACTIONS */}
@@ -95,7 +106,10 @@ export default function UserDashboard() {
             href="/hotels"
             className="bg-white p-6 rounded shadow hover:shadow-lg transition"
           >
-            <h3 className="text-xl font-bold">🏨 Book Hotels</h3>
+            <h3 className="text-xl font-bold">
+              🏨 Book Hotels
+            </h3>
+
             <p className="text-gray-600 mt-1">
               Browse hotels in Cebu and view details
             </p>
@@ -103,26 +117,63 @@ export default function UserDashboard() {
 
         </div>
 
-        {/* ================= EXTRA SECTIONS ================= */}
+        {/* ================= RECENT BOOKINGS TAB ================= */}
+        <div className="px-6 pb-6">
 
+          <Link
+            href="/user/bookings"
+            className="bg-white p-5 rounded shadow flex items-center justify-between hover:shadow-lg transition"
+          >
+
+            <div>
+
+              <h3 className="font-bold text-lg">
+                🏨 Recent Bookings
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1">
+                View your hotel booking history
+              </p>
+
+            </div>
+
+            <div className="text-2xl text-gray-400">
+              →
+            </div>
+
+          </Link>
+
+        </div>
+
+        {/* ================= EXTRA SECTIONS ================= */}
         <div className="p-6 grid md:grid-cols-2 gap-4">
 
           {/* Recommended Hotels */}
           <div className="bg-white p-5 rounded shadow">
-            <h3 className="font-bold text-lg mb-2">🏨 Recommended Hotels</h3>
+
+            <h3 className="font-bold text-lg mb-2">
+              🏨 Recommended Hotels
+            </h3>
+
             <p className="text-gray-500">
               Top picks for you in Cebu.
             </p>
+
           </div>
 
           {/* About Us */}
           <div className="bg-white p-5 rounded shadow">
-            <h3 className="font-bold text-lg mb-2">ℹ️ About Us</h3>
+
+            <h3 className="font-bold text-lg mb-2">
+              ℹ️ About Us
+            </h3>
+
             <p className="text-gray-600 text-sm leading-relaxed">
               Inn Sync is a modern hotel booking platform designed for travelers in Cebu.
               We aim to make booking faster, easier, and more reliable with real-time
               availability, secure payments, and seamless user experience.
             </p>
+
           </div>
 
         </div>

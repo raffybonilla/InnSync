@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const hotels = [
   { id: 1, name: "Radisson Blu Cebu", price: "₱6,000/night" },
@@ -9,8 +10,18 @@ const hotels = [
 ];
 
 export default function HotelsPage() {
+  const router = useRouter();
+
   return (
     <div className="p-6">
+
+      {/* BACK BUTTON */}
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-gray-600 mb-4"
+      >
+        ← Back
+      </button>
 
       <h1 className="text-2xl font-bold mb-4">
         Cebu Hotels
