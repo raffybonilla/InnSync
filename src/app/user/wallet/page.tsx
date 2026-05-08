@@ -47,7 +47,6 @@ export default function WalletPage() {
 
   const totalWallet = balance + cashback;
 
-  // 🔥 AUTO DEDUCTION LOGIC
   const deductWallet = (amount: number) => {
     let total = balance + cashback;
 
@@ -95,24 +94,18 @@ export default function WalletPage() {
       {view === "menu" && (
         <div className="space-y-3">
 
-          <button
-            onClick={() => setView("balance")}
-            className="w-full p-4 bg-white rounded-xl shadow text-left"
-          >
+          <button className="w-full p-4 bg-white rounded-xl shadow text-left"
+            onClick={() => setView("balance")}>
             💰 Wallet Balance →
           </button>
 
-          <button
-            onClick={() => setView("payment")}
-            className="w-full p-4 bg-white rounded-xl shadow text-left"
-          >
+          <button className="w-full p-4 bg-white rounded-xl shadow text-left"
+            onClick={() => setView("payment")}>
             💳 Payment Options →
           </button>
 
-          <button
-            onClick={() => setView("transactions")}
-            className="w-full p-4 bg-white rounded-xl shadow text-left"
-          >
+          <button className="w-full p-4 bg-white rounded-xl shadow text-left"
+            onClick={() => setView("transactions")}>
             📜 Transaction History →
           </button>
 
@@ -136,16 +129,25 @@ export default function WalletPage() {
 
             <div className="flex justify-between mt-1">
               <span>Cashback</span>
-              <span className="text-green-600">₱{cashback}</span>
+              <span className="text-gray-600">₱{cashback}</span>
             </div>
           </div>
 
-          {/* 🔥 TEST BOOK BUTTON (simulate booking deduction) */}
+          {/* FIXED BUTTON (NO GREEN) */}
           <button
-            onClick={() => deductWallet(6000)}
-            className="mt-5 w-full bg-green-600 text-white py-2 rounded"
+            onClick={() => {
+              const total = balance + cashback;
+
+              if (total <= 0) {
+                alert("No wallet balance");
+                return;
+              }
+
+              deductWallet(total);
+            }}
+            className="mt-6 w-full bg-blue-600 text-white py-2 rounded"
           >
-            Test Book (₱6000)
+            Test Book (Use Wallet Balance)
           </button>
 
         </div>
@@ -154,6 +156,7 @@ export default function WalletPage() {
       {/* PAYMENT */}
       {view === "payment" && (
         <div className="bg-white p-5 rounded-xl shadow">
+
           <h2 className="font-semibold mb-4">💳 Payment Options</h2>
 
           <button className="w-full p-3 bg-blue-500 text-white rounded-lg">
@@ -164,29 +167,39 @@ export default function WalletPage() {
             Pay with Card
           </button>
 
-          <button className="w-full p-3 bg-green-600 text-white rounded-lg mt-2">
+          <button className="w-full p-3 bg-yellow-500 text-white rounded-lg mt-2">
+            Pay with PayPal
+          </button>
+
+          {/* NO GREEN */}
+          <button className="w-full p-3 bg-blue-700 text-white rounded-lg mt-2">
             Pay with Wallet
           </button>
+
         </div>
       )}
 
       {/* TRANSACTIONS */}
       {view === "transactions" && (
         <div className="bg-white p-5 rounded-xl shadow">
+
           <h2 className="font-semibold mb-4">📜 Transaction History</h2>
 
           {transactions.map((tx) => (
             <div key={tx.id} className="flex justify-between border-b py-2">
+
               <div>
                 <p className="text-sm font-medium">{tx.title}</p>
                 <p className="text-xs text-gray-500">{tx.date}</p>
               </div>
 
-              <p className={tx.type === "credit" ? "text-green-600" : "text-red-500"}>
+              <p className={tx.type === "credit" ? "text-gray-600" : "text-red-500"}>
                 {tx.type === "credit" ? "+" : "-"}₱{Math.abs(tx.amount)}
               </p>
+
             </div>
           ))}
+
         </div>
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -9,9 +9,39 @@ export default function UserDashboard() {
   const router = useRouter();
   const [showLogout, setShowLogout] = useState(false);
 
+  // 🔔 NOTIFICATION COUNT (SYNCED WITH ALERTS LOGIC)
+  const [notifCount, setNotifCount] = useState(0);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/");
+  };
+
+  // 🔥 FETCH NOTIFICATIONS FROM SAME SOURCE (bookings-based alerts)
+  const fetchNotifications = async () => {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("id");
+
+    if (!error && data) {
+      setNotifCount(data.length);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+
+    // optional auto refresh sync (keeps badge updated)
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ RESET WHEN USER CLEARS NOTIFICATIONS PAGE
+  const handleMarkAsReadSync = () => {
+    setNotifCount(0);
   };
 
   return (
@@ -40,12 +70,19 @@ export default function UserDashboard() {
           💰 My Wallet
         </Link>
 
-        <Link href="/user/bookings" className="block hover:text-blue-600">
-          🏨 Booking History
-        </Link>
-
-        <Link href="/user/notifications" className="block hover:text-blue-600">
+        {/* 🔔 NOTIFICATIONS (SYNCED BADGE) */}
+        <Link
+          href="/user/notifications"
+          onClick={handleMarkAsReadSync}
+          className="block hover:text-blue-600 relative"
+        >
           🔔 Notifications
+
+          {notifCount > 0 && (
+            <span className="absolute -top-2 -right-3 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">
+              {notifCount > 99 ? "99+" : notifCount}
+            </span>
+          )}
         </Link>
 
         {/* LOGOUT */}
@@ -121,35 +158,26 @@ export default function UserDashboard() {
 
         </div>
 
-        {/* ================= EXTRA SECTIONS ================= */}
+        {/* EXTRA SECTIONS */}
         <div className="p-6 grid md:grid-cols-2 gap-4">
 
-          {/* Recommended Hotels */}
           <div className="bg-white p-5 rounded shadow">
-
             <h3 className="font-bold text-lg mb-2">
               🏨 Recommended Hotels
             </h3>
-
             <p className="text-gray-500">
               Top picks for you in Cebu.
             </p>
-
           </div>
 
-          {/* About Us */}
           <div className="bg-white p-5 rounded shadow">
-
             <h3 className="font-bold text-lg mb-2">
               ℹ️ About Us
             </h3>
-
             <p className="text-gray-600 text-sm leading-relaxed">
               Inn Sync is a modern hotel booking platform designed for travelers in Cebu.
-              We aim to make booking faster, easier, and more reliable with real-time
-              availability, secure payments, and seamless user experience.
+              We aim to make booking faster, easier, and more reliable.
             </p>
-
           </div>
 
         </div>
