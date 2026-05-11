@@ -54,7 +54,10 @@ export default function UserDashboard() {
           Inn Sync
         </h1>
 
-        <Link href="/user/profile" className="block hover:text-blue-600">
+        <Link
+          href="/user/profile"
+          className="block text-gray-700 hover:text-blue-600 transition"
+        >
           👤 Profile
         </Link>
 
@@ -62,11 +65,17 @@ export default function UserDashboard() {
           🏠 Dashboard
         </div>
 
-        <Link href="/user/inbox" className="block hover:text-blue-600">
+        <Link
+          href="/user/inbox"
+          className="block text-gray-700 hover:text-blue-600 transition"
+        >
           📩 Inbox
         </Link>
 
-        <Link href="/user/wallet" className="block hover:text-blue-600">
+        <Link
+          href="/user/wallet"
+          className="block text-gray-700 hover:text-blue-600 transition"
+        >
           💰 My Wallet
         </Link>
 
@@ -74,7 +83,7 @@ export default function UserDashboard() {
         <Link
           href="/user/notifications"
           onClick={handleMarkAsReadSync}
-          className="block hover:text-blue-600 relative"
+          className="block text-gray-700 hover:text-blue-600 relative transition"
         >
           🔔 Notifications
 
@@ -88,7 +97,7 @@ export default function UserDashboard() {
         {/* LOGOUT */}
         <button
           onClick={() => setShowLogout(true)}
-          className="mt-10 bg-red-500 text-white w-full py-2 rounded hover:bg-red-600"
+          className="mt-10 bg-red-500 text-white w-full py-2 rounded hover:bg-red-600 transition"
         >
           Logout
         </button>
@@ -96,18 +105,18 @@ export default function UserDashboard() {
       </div>
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="flex-1">
+      <div className="flex-1 text-gray-800">
 
         {/* HEADER */}
         <div className="bg-white shadow px-6 py-4 flex justify-between items-center">
 
-          <h2 className="text-xl font-bold">
+          <h2 className="text-xl font-bold text-gray-800">
             Dashboard
           </h2>
 
           <Link
             href="/user/profile"
-            className="bg-gray-100 px-4 py-2 rounded hover:bg-gray-200 text-sm font-medium"
+            className="bg-gray-100 px-4 py-2 rounded hover:bg-gray-200 text-sm font-medium text-gray-700 transition"
           >
             My Profile
           </Link>
@@ -129,10 +138,10 @@ export default function UserDashboard() {
 
             <input
               placeholder="Search hotels..."
-              className="w-full p-3 rounded text-black"
+              className="w-full p-3 rounded text-black outline-none"
             />
 
-            <button className="bg-black px-6 rounded">
+            <button className="bg-black text-white px-6 rounded hover:bg-gray-800 transition">
               Search
             </button>
 
@@ -147,7 +156,7 @@ export default function UserDashboard() {
             href="/hotels"
             className="bg-white p-6 rounded shadow hover:shadow-lg transition"
           >
-            <h3 className="text-xl font-bold">
+            <h3 className="text-xl font-bold text-gray-800">
               🏨 Book Hotels
             </h3>
 
@@ -162,18 +171,20 @@ export default function UserDashboard() {
         <div className="p-6 grid md:grid-cols-2 gap-4">
 
           <div className="bg-white p-5 rounded shadow">
-            <h3 className="font-bold text-lg mb-2">
+            <h3 className="font-bold text-lg mb-2 text-gray-800">
               🏨 Recommended Hotels
             </h3>
+
             <p className="text-gray-500">
               Top picks for you in Cebu.
             </p>
           </div>
 
           <div className="bg-white p-5 rounded shadow">
-            <h3 className="font-bold text-lg mb-2">
+            <h3 className="font-bold text-lg mb-2 text-gray-800">
               ℹ️ About Us
             </h3>
+
             <p className="text-gray-600 text-sm leading-relaxed">
               Inn Sync is a modern hotel booking platform designed for travelers in Cebu.
               We aim to make booking faster, easier, and more reliable.
@@ -190,7 +201,7 @@ export default function UserDashboard() {
 
           <div className="bg-white w-[90%] max-w-md rounded-2xl shadow-xl p-6 text-center">
 
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-gray-800">
               Log out of Inn Sync?
             </h2>
 
@@ -200,16 +211,17 @@ export default function UserDashboard() {
 
             <div className="flex gap-3 mt-6">
 
+              {/* ✅ FIXED CANCEL BUTTON (VISIBLE NOW) */}
               <button
                 onClick={() => setShowLogout(false)}
-                className="flex-1 bg-gray-100 py-2 rounded"
+                className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 rounded hover:bg-gray-100 transition"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleLogout}
-                className="flex-1 bg-red-500 text-white py-2 rounded"
+                className="flex-1 bg-red-500 text-white py-2 rounded hover:bg-red-600 transition"
               >
                 Logout
               </button>
