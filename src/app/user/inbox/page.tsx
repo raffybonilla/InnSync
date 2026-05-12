@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 type Message = {
@@ -21,14 +21,13 @@ export default function InboxPage() {
   const [selectedChat, setSelectedChat] = useState<number | null>(1);
   const [showNewChat, setShowNewChat] = useState(false);
 
-  // MESSAGE INPUT
   const [messageInput, setMessageInput] = useState("");
 
-  // NEW CHAT INPUTS
   const [newHotel, setNewHotel] = useState("");
   const [newMessage, setNewMessage] = useState("");
 
-  // CHATS
+  const [hasNewBooking, setHasNewBooking] = useState(true);
+
   const [chats, setChats] = useState<Chat[]>([
     {
       id: 1,
@@ -57,43 +56,48 @@ export default function InboxPage() {
         { sender: "user", text: "Nice!" },
       ],
     },
-
-    // SAMPLE AUTO BOOKING CHAT
-    {
-      id: 4,
-      name: "Quest Hotel Cebu",
-      handler: "Hotel Staff",
-      messages: [
-        {
-          sender: "hotel",
-          text: "Thank you for booking at Quest Hotel Cebu.",
-        },
-        {
-          sender: "hotel",
-          text: "Feel free to message us for concerns.",
-        },
-      ],
-    },
   ]);
 
-  // ACTIVE CHAT
+  // ================= NEW BOOKING ALERT =================
+  useEffect(() => {
+    if (!hasNewBooking) return;
+
+    const timer = setTimeout(() => {
+      setChats((prev) => [
+        {
+          id: Date.now(),
+          name: "New Booking Alert",
+          handler: "System",
+          messages: [
+            {
+              sender: "hotel",
+              text: "New guest booked Radisson Blu Cebu - Deluxe Room.",
+            },
+          ],
+        },
+        ...prev,
+      ]);
+
+      setHasNewBooking(false);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [hasNewBooking]);
+
   const activeChat = chats.find((c) => c.id === selectedChat);
 
-  // SEND MESSAGE
+  // ================= SEND MESSAGE =================
   const sendMessage = () => {
     if (!messageInput.trim() || !activeChat) return;
 
-    setChats((prevChats) =>
-      prevChats.map((chat) =>
+    setChats((prev) =>
+      prev.map((chat) =>
         chat.id === activeChat.id
           ? {
               ...chat,
               messages: [
                 ...chat.messages,
-                {
-                  sender: "user",
-                  text: messageInput,
-                },
+                { sender: "user", text: messageInput },
               ],
             }
           : chat
@@ -102,10 +106,9 @@ export default function InboxPage() {
 
     setMessageInput("");
 
-    // AUTO HOTEL REPLY
     setTimeout(() => {
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
+      setChats((prev) =>
+        prev.map((chat) =>
           chat.id === activeChat.id
             ? {
                 ...chat,
@@ -120,10 +123,10 @@ export default function InboxPage() {
             : chat
         )
       );
-    }, 1000);
+    }, 900);
   };
 
-  // CREATE NEW CHAT
+  // ================= CREATE CHAT =================
   const createNewChat = () => {
     if (!newHotel.trim() || !newMessage.trim()) return;
 
@@ -132,10 +135,7 @@ export default function InboxPage() {
       name: newHotel,
       handler: "Hotel Staff",
       messages: [
-        {
-          sender: "user",
-          text: newMessage,
-        },
+        { sender: "user", text: newMessage },
         {
           sender: "hotel",
           text: `Welcome to ${newHotel}. How can we help you?`,
@@ -144,7 +144,6 @@ export default function InboxPage() {
     };
 
     setChats((prev) => [...prev, newChat]);
-
     setSelectedChat(newChat.id);
 
     setNewHotel("");
@@ -153,9 +152,9 @@ export default function InboxPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-gray-100 flex text-black">
 
-      {/* LEFT SIDE */}
+      {/* ================= LEFT PANEL ================= */}
       <div className="w-1/3 bg-white border-r p-4">
 
         {/* HEADER */}
@@ -163,18 +162,18 @@ export default function InboxPage() {
 
           <button
             onClick={() => router.push("/user/dashboard")}
-            className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+            className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 font-semibold"
           >
             ← Back
           </button>
 
-          <h1 className="text-xl font-bold">
+          <h1 className="text-xl font-bold text-black">
             Inbox
           </h1>
 
           <button
             onClick={() => setShowNewChat(true)}
-            className="ml-auto bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+            className="ml-auto bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 font-semibold"
           >
             + New Chat
           </button>
@@ -189,25 +188,19 @@ export default function InboxPage() {
               key={chat.id}
               onClick={() => setSelectedChat(chat.id)}
               className={`text-left p-3 border-b hover:bg-gray-100 w-full transition ${
-                selectedChat === chat.id
-                  ? "bg-gray-200"
-                  : ""
+                selectedChat === chat.id ? "bg-gray-200" : ""
               }`}
             >
-              <p className="font-semibold">
+              <p className="font-bold text-black text-base">
                 {chat.name}
               </p>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-800 font-medium">
                 Handled by {chat.handler}
               </p>
 
-              <p className="text-xs text-gray-400 mt-1 truncate">
-                {
-                  chat.messages[
-                    chat.messages.length - 1
-                  ]?.text
-                }
+              <p className="text-sm text-gray-700 mt-1 truncate font-medium">
+                {chat.messages[chat.messages.length - 1]?.text}
               </p>
 
             </button>
@@ -217,24 +210,24 @@ export default function InboxPage() {
 
       </div>
 
-      {/* RIGHT SIDE */}
+      {/* ================= RIGHT PANEL ================= */}
       <div className="flex-1 p-6">
 
         {!activeChat ? (
-          <p className="text-gray-500">
+          <p className="text-gray-600 font-semibold">
             Select a conversation
           </p>
         ) : (
-          <div className="bg-white p-5 rounded shadow h-full flex flex-col">
+          <div className="bg-white p-5 rounded shadow h-full flex flex-col text-black">
 
             {/* CHAT HEADER */}
             <div className="border-b pb-3 mb-4">
 
-              <h2 className="text-lg font-bold">
+              <h2 className="text-lg font-bold text-black">
                 {activeChat.name}
               </h2>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-700 font-medium">
                 Handled by: {activeChat.handler}
               </p>
 
@@ -246,10 +239,10 @@ export default function InboxPage() {
               {activeChat.messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`p-3 rounded max-w-[75%] ${
+                  className={`p-3 rounded max-w-[75%] border text-base font-medium ${
                     msg.sender === "user"
-                      ? "bg-blue-500 text-white ml-auto"
-                      : "bg-gray-200 text-black"
+                      ? "bg-white text-black ml-auto border-gray-300"
+                      : "bg-[#90a1b9] text-black border-[#7d8aa1]"
                   }`}
                 >
                   {msg.text}
@@ -259,20 +252,18 @@ export default function InboxPage() {
             </div>
 
             {/* INPUT */}
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex gap-2 items-center">
 
               <input
                 value={messageInput}
-                onChange={(e) =>
-                  setMessageInput(e.target.value)
-                }
+                onChange={(e) => setMessageInput(e.target.value)}
                 placeholder="Type a message..."
-                className="w-full border p-2 rounded"
+                className="w-full border-2 border-gray-400 p-3 rounded-lg focus:outline-none focus:border-black bg-white text-black placeholder-gray-600 font-medium"
               />
 
               <button
                 onClick={sendMessage}
-                className="bg-black text-white px-4 rounded hover:bg-gray-800"
+                className="bg-black text-white px-5 py-3 rounded-lg hover:bg-gray-800 font-semibold"
               >
                 Send
               </button>
@@ -284,11 +275,11 @@ export default function InboxPage() {
 
       </div>
 
-      {/* NEW CHAT MODAL */}
+      {/* ================= NEW CHAT MODAL ================= */}
       {showNewChat && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-          <div className="bg-white w-[90%] max-w-md p-6 rounded shadow-lg">
+          <div className="bg-white w-[90%] max-w-md p-6 rounded shadow-lg text-black">
 
             <h2 className="text-lg font-bold mb-3">
               Start New Chat
@@ -296,34 +287,30 @@ export default function InboxPage() {
 
             <input
               value={newHotel}
-              onChange={(e) =>
-                setNewHotel(e.target.value)
-              }
+              onChange={(e) => setNewHotel(e.target.value)}
               placeholder="Hotel name..."
-              className="w-full border p-2 rounded mb-3"
+              className="w-full border p-2 rounded mb-3 text-black font-medium"
             />
 
             <textarea
               value={newMessage}
-              onChange={(e) =>
-                setNewMessage(e.target.value)
-              }
+              onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Message..."
-              className="w-full border p-2 rounded mb-3"
+              className="w-full border p-2 rounded mb-3 text-black font-medium"
             />
 
             <div className="flex gap-2">
 
               <button
                 onClick={() => setShowNewChat(false)}
-                className="flex-1 bg-gray-200 py-2 rounded hover:bg-gray-300"
+                className="flex-1 bg-gray-200 py-2 rounded hover:bg-gray-300 font-semibold"
               >
                 Cancel
               </button>
 
               <button
                 onClick={createNewChat}
-                className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-semibold"
               >
                 Send
               </button>

@@ -1,348 +1,221 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { bookingStore } from "@/lib/bookingStore";
 
-type PaymentMethod = "GCash" | "Card" | "PayPal" | "";
-
-export default function HotelDetails() {
-  const { id } = useParams();
-  const router = useRouter();
-
-  const hotelPrices: Record<string, number> = {
-    "1": 6000,
-    "2": 12000,
-    "3": 5500,
-  };
-
-  const hotelNames: Record<string, string> = {
-    "1": "Radisson Blu Cebu",
-    "2": "Shangri-La Mactan",
-    "3": "Quest Hotel Cebu",
-  };
-
-  const price = hotelPrices[id as string] || 5000;
-  const hotelName = hotelNames[id as string] || "Hotel";
-
-  // WALLET
-  const [balance, setBalance] = useState(1234);
-  const [cashback, setCashback] = useState(250);
-
-  // UI
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  const [errorMsg, setErrorMsg] = useState("");
-
-  // OPTIONS
-  const [useCashback, setUseCashback] = useState(false);
-
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("GCash");
-
-  const [paymentAmount, setPaymentAmount] = useState("");
-
-  // TOTAL WALLET
-  const totalWallet = balance + cashback;
-
-  // ✅ FIXED LOGIC (IMPORTANT)
-  const walletApplied = useCashback ? totalWallet : 0;
-  const remainingBalance = Math.max(price - walletApplied, 0);
-
-  // BOOKING
-  const handleBooking = async () => {
-    setErrorMsg("");
-
-    let updatedBalance = balance;
-    let updatedCashback = cashback;
-
-    // USE WALLET / CASHBACK
-    if (useCashback) {
-      let remaining = price;
-
-      if (updatedCashback > 0) {
-        const cashbackUsed = Math.min(updatedCashback, remaining);
-        updatedCashback -= cashbackUsed;
-        remaining -= cashbackUsed;
-      }
-
-      if (remaining > 0) {
-        const balanceUsed = Math.min(updatedBalance, remaining);
-        updatedBalance -= balanceUsed;
-        remaining -= balanceUsed;
-      }
-    }
-
-    setBalance(updatedBalance);
-    setCashback(updatedCashback);
-
-    const { error } = await supabase.from("bookings").insert([
+// ================= HOTEL DATA (FROM YOUR ORIGINAL) =================
+const hotels: any = {
+  "1": {
+    name: "Radisson Blu Cebu",
+    rooms: [
       {
-        hotel_name: hotelName,
-        hotel_id: id,
-        total_price: price,
-        payment_method: paymentMethod,
-        used_wallet_cashback: useCashback,
-        payment_amount: Number(paymentAmount),
-        status: "confirmed",
-        created_at: new Date(),
+        name: "Deluxe Room",
+        price: 6000,
+        guests: 2,
+        rating: 4.6,
+        inclusions: "Breakfast • Pool • WiFi • City View",
+        image:
+          "https://images.unsplash.com/photo-1505691938895-1758d7feb511",
+        caption: "Modern comfort room overlooking Cebu skyline",
       },
-    ]);
+      {
+        name: "Executive Suite",
+        price: 9000,
+        guests: 3,
+        rating: 4.8,
+        inclusions: "Lounge Access • Breakfast • Premium View",
+        image:
+          "https://images.unsplash.com/photo-1551887373-6c1a4a3c8b6d",
+        caption: "Spacious suite designed for premium relaxation",
+      },
+    ],
+  },
 
-    if (error) {
-      setErrorMsg("Booking failed.");
-      return;
-    }
+  "2": {
+    name: "Shangri-La Mactan",
+    rooms: [
+      {
+        name: "Ocean View Room",
+        price: 12000,
+        guests: 2,
+        rating: 4.9,
+        inclusions: "Private Beach • Spa • Breakfast",
+        image:
+          "https://images.unsplash.com/photo-1501117716987-c8e1ecb2101a",
+        caption: "Wake up to ocean waves and sunrise views",
+      },
+    ],
+  },
 
-    setShowPaymentModal(false);
-    setShowSuccess(true);
+  "3": {
+    name: "Quest Hotel Cebu",
+    rooms: [
+      {
+        name: "Standard Room",
+        price: 3500,
+        guests: 2,
+        rating: 4.3,
+        inclusions: "WiFi • Breakfast • Gym Access",
+        image:
+          "https://images.unsplash.com/photo-1445019980597-93fa8acb246c",
+        caption: "Simple and cozy room for budget travelers",
+      },
+    ],
+  },
+};
+
+export default function HotelDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+
+  const hotelId = String(params.id);
+  const hotel = hotels[hotelId];
+
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // ================= SAFE CHECK =================
+  if (!hotel) {
+    return (
+      <div className="p-6 text-red-600">
+        <h1 className="text-xl font-bold">Hotel not found</h1>
+        <p>Invalid ID: {hotelId}</p>
+
+        <button
+          className="mt-4 underline"
+          onClick={() => router.push("/hotels")}
+        >
+          ← Back to Hotels
+        </button>
+      </div>
+    );
+  }
+
+  // ================= ROOM SELECT =================
+  const selectRoom = (room: any) => {
+    setSelectedRoom(room);
+    setShowConfirm(true);
+  };
+
+  const confirmRoom = () => {
+    bookingStore.set({
+      hotel: hotel.name,
+      room: selectedRoom.name,
+      price: selectedRoom.price,
+      guests: selectedRoom.guests,
+      checkIn: "",
+      checkOut: "",
+    });
+
+    setShowConfirm(false);
+
+    router.push(`/hotels/${hotelId}/checkout`);
   };
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen p-6 bg-white text-black">
 
-      {/* BACK */}
+      {/* HEADER */}
       <button
-        onClick={() => router.back()}
-        className="mb-4 text-gray-600"
+        onClick={() => router.push("/hotels")}
+        className="mb-5 underline"
       >
-        ← Back
+        ← Back to Hotels
       </button>
 
-      {/* HOTEL INFO */}
-      <h1 className="text-3xl font-bold">{hotelName}</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        {hotel.name}
+      </h1>
 
-      <p className="mt-3 text-lg font-medium">
-        Price: ₱{price.toLocaleString()}
-      </p>
+      {/* ================= ROOMS ================= */}
+      <div className="grid md:grid-cols-2 gap-5">
 
-      {errorMsg && (
-        <p className="text-red-500 mt-3">{errorMsg}</p>
-      )}
+        {hotel.rooms.map((room: any, index: number) => (
+          <div
+            key={index}
+            className="border rounded-xl overflow-hidden shadow bg-white hover:scale-[1.01] transition"
+          >
 
-      {/* BOOK BUTTON */}
-      <button
-        onClick={() => setShowConfirm(true)}
-        className="mt-6 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg"
-      >
-        Book Now
-      </button>
+            {/* ROOM IMAGE */}
+            <img
+              src={room.image}
+              alt={room.name}
+              className="h-52 w-full object-cover"
+            />
 
-      {/* CONFIRM MODAL */}
-      {showConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="p-4">
 
-          <div className="bg-white p-6 rounded-xl w-[90%] max-w-sm text-center">
+              <h2 className="text-xl font-bold">
+                {room.name}
+              </h2>
 
-            <h2 className="text-2xl font-bold">
-              Proceed Booking?
+              <p className="text-green-600 font-bold">
+                ₱{room.price}
+              </p>
+
+              <p className="mt-1">
+                ⭐ {room.rating}
+              </p>
+
+              <p className="mt-1 text-sm text-gray-600">
+                {room.inclusions}
+              </p>
+
+              <p className="italic text-black/70 mt-2">
+                {room.caption}
+              </p>
+
+              <button
+                onClick={() => selectRoom(room)}
+                className="mt-4 bg-green-600 text-white px-4 py-2 rounded w-full"
+              >
+                Select Room
+              </button>
+
+            </div>
+          </div>
+        ))}
+
+      </div>
+
+      {/* ================= CONFIRM MODAL ================= */}
+      {showConfirm && selectedRoom && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+
+          <div className="bg-white p-5 rounded-xl w-[300px] text-center">
+
+            <h2 className="font-bold text-lg">
+              Confirm Room
             </h2>
 
-            <p className="text-gray-500 mt-2">
-              Continue your reservation.
+            <p className="mt-2">
+              {selectedRoom.name}
             </p>
 
-            <div className="flex gap-3 mt-6">
+            <p>
+              ₱{selectedRoom.price}
+            </p>
+
+            <div className="flex gap-2 mt-5">
 
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 bg-gray-200 py-3 rounded-lg"
+                className="bg-gray-300 px-4 py-2 rounded w-full"
               >
                 Cancel
               </button>
 
               <button
-                onClick={() => {
-                  setShowConfirm(false);
-                  setShowPaymentModal(true);
-                }}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg"
+                onClick={confirmRoom}
+                className="bg-green-600 text-white px-4 py-2 rounded w-full"
               >
-                Proceed
+                Confirm
               </button>
 
             </div>
 
           </div>
-
-        </div>
-      )}
-
-      {/* PAYMENT MODAL */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-          <div className="bg-white w-[90%] max-w-md rounded-xl p-6">
-
-            <h2 className="text-2xl font-bold">
-              Payment Details
-            </h2>
-
-            {/* TOTAL */}
-            <div className="mt-5">
-              <p className="text-gray-600 text-sm">Total Price</p>
-              <p className="text-2xl font-bold">
-                ₱{price.toLocaleString()}
-              </p>
-            </div>
-
-            {/* WALLET TOGGLE */}
-            <div className="mt-5 flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={useCashback}
-                onChange={() => setUseCashback(prev => !prev)}
-              />
-
-              <p className="text-sm">
-                Use available balance or cashback
-              </p>
-            </div>
-
-            {/* ✅ FIXED DISPLAY (NEVER DISAPPEARS) */}
-            <div className="mt-5 bg-gray-100 p-3 rounded">
-
-              <p className="text-sm text-gray-600">
-                Wallet Applied
-              </p>
-
-              <p className="font-bold">
-                ₱{walletApplied}
-              </p>
-
-              <p className="text-sm text-gray-600 mt-2">
-                Remaining Balance
-              </p>
-
-              <p className="text-xl font-bold">
-                ₱{remainingBalance}
-              </p>
-
-            </div>
-
-            {/* PAYMENT METHODS */}
-            <div className="mt-5">
-
-              <p className="font-medium mb-3">
-                Select Payment Method
-              </p>
-
-              <div className="flex gap-2 flex-wrap">
-
-                <button
-                  onClick={() => setPaymentMethod("GCash")}
-                  className={`px-4 py-2 rounded ${
-                    paymentMethod === "GCash"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200"
-                  }`}
-                >
-                  GCash
-                </button>
-
-                <button
-                  onClick={() => setPaymentMethod("Card")}
-                  className={`px-4 py-2 rounded ${
-                    paymentMethod === "Card"
-                      ? "bg-black text-white"
-                      : "bg-gray-200"
-                  }`}
-                >
-                  Card
-                </button>
-
-                <button
-                  onClick={() => setPaymentMethod("PayPal")}
-                  className={`px-4 py-2 rounded ${
-                    paymentMethod === "PayPal"
-                      ? "bg-yellow-500 text-white"
-                      : "bg-gray-200"
-                  }`}
-                >
-                  PayPal
-                </button>
-
-              </div>
-            </div>
-
-            {/* INPUT */}
-            <div className="mt-5">
-              <p className="font-medium mb-2">Enter Amount</p>
-
-              <input
-                type="number"
-                value={paymentAmount}
-                onChange={(e) =>
-                  setPaymentAmount(e.target.value)
-                }
-                className="w-full border rounded-lg p-3"
-              />
-            </div>
-
-            {/* ACTIONS */}
-            <div className="flex gap-3 mt-7">
-
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="flex-1 bg-gray-200 py-3 rounded-lg"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleBooking}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg"
-              >
-                Pay Now
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* SUCCESS MODAL */}
-      {showSuccess && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-          <div className="bg-white p-6 rounded-xl w-[90%] max-w-sm text-center">
-
-            <h2 className="text-2xl font-bold text-green-600">
-              Booking Successful 🎉
-            </h2>
-
-            <p className="mt-3 text-gray-600">
-              Your booking has been confirmed.
-            </p>
-
-            <div className="flex gap-3 mt-6">
-
-              <button
-                onClick={() =>
-                  router.push("/user/notifications")
-                }
-                className="flex-1 bg-blue-600 text-white py-2 rounded"
-              >
-                Booking History
-              </button>
-
-              <button
-                onClick={() =>
-                  router.push("/user/dashboard")
-                }
-                className="flex-1 bg-green-600 text-white py-2 rounded"
-              >
-                Dashboard
-              </button>
-
-            </div>
-
-          </div>
-
         </div>
       )}
 

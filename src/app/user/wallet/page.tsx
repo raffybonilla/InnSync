@@ -11,6 +11,7 @@ type Transaction = {
   date: string;
   amount: number;
   type: "credit" | "debit";
+  paymentMethod?: string;
 };
 
 export default function WalletPage() {
@@ -21,13 +22,14 @@ export default function WalletPage() {
   const [balance, setBalance] = useState(1234);
   const [cashback, setCashback] = useState(250);
 
-  const transactions: Transaction[] = [
+  const [transactions, setTransactions] = useState<Transaction[]>([
     {
       id: 1,
       title: "Radisson Blu Cebu",
       date: "2026-05-01",
       amount: -5000,
       type: "debit",
+      paymentMethod: "Wallet",
     },
     {
       id: 2,
@@ -35,6 +37,7 @@ export default function WalletPage() {
       date: "2026-04-20",
       amount: -8000,
       type: "debit",
+      paymentMethod: "GCash",
     },
     {
       id: 3,
@@ -42,12 +45,27 @@ export default function WalletPage() {
       date: "2026-05-02",
       amount: 250,
       type: "credit",
+      paymentMethod: "System",
     },
-  ];
+  ]);
 
   const totalWallet = balance + cashback;
 
-  const deductWallet = (amount: number) => {
+  const getToday = () => {
+    return new Date().toISOString().split("T")[0];
+  };
+
+  const addTransaction = (tx: Omit<Transaction, "id">) => {
+    setTransactions((prev) => [
+      {
+        id: prev.length + 1,
+        ...tx,
+      },
+      ...prev,
+    ]);
+  };
+
+  const deductWallet = (amount: number, method: string = "Wallet") => {
     let total = balance + cashback;
 
     if (amount > total) {
@@ -63,8 +81,28 @@ export default function WalletPage() {
     setBalance(newBalance);
     setCashback(newCashback);
 
+    addTransaction({
+      title: "Hotel Booking Payment",
+      date: getToday(),
+      amount: -amount,
+      type: "debit",
+      paymentMethod: method,
+    });
+
     alert("Booking successful! Wallet deducted.");
     return true;
+  };
+
+  const payWithMethod = (method: string) => {
+    addTransaction({
+      title: `Payment via ${method}`,
+      date: getToday(),
+      amount: 0,
+      type: "debit",
+      paymentMethod: method,
+    });
+
+    alert(`Paid using ${method}`);
   };
 
   const goBack = () => {
@@ -76,7 +114,7 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6 text-gray-900">
 
       {/* HEADER */}
       <div className="flex items-center gap-3 mb-6">
@@ -94,18 +132,24 @@ export default function WalletPage() {
       {view === "menu" && (
         <div className="space-y-3">
 
-          <button className="w-full p-4 bg-white rounded-xl shadow text-left"
-            onClick={() => setView("balance")}>
+          <button
+            className="w-full p-4 bg-white rounded-xl shadow text-left"
+            onClick={() => setView("balance")}
+          >
             💰 Wallet Balance →
           </button>
 
-          <button className="w-full p-4 bg-white rounded-xl shadow text-left"
-            onClick={() => setView("payment")}>
+          <button
+            className="w-full p-4 bg-white rounded-xl shadow text-left"
+            onClick={() => setView("payment")}
+          >
             💳 Payment Options →
           </button>
 
-          <button className="w-full p-4 bg-white rounded-xl shadow text-left"
-            onClick={() => setView("transactions")}>
+          <button
+            className="w-full p-4 bg-white rounded-xl shadow text-left"
+            onClick={() => setView("transactions")}
+          >
             📜 Transaction History →
           </button>
 
@@ -114,14 +158,14 @@ export default function WalletPage() {
 
       {/* BALANCE */}
       {view === "balance" && (
-        <div className="bg-white p-5 rounded-xl shadow">
+        <div className="p-5 rounded-xl shadow" style={{ backgroundColor: "#a7b9e9" }}>
 
-          <h2 className="font-semibold mb-4">💰 Wallet Balance</h2>
+          <h2 className="font-semibold mb-4 text-black">💰 Wallet Balance</h2>
 
-          <p className="text-sm text-gray-500">Total Wallet Balance</p>
-          <p className="text-3xl font-bold">₱{totalWallet}</p>
+          <p className="text-sm text-black">Total Wallet Balance</p>
+          <p className="text-3xl font-bold text-black">₱{totalWallet}</p>
 
-          <div className="mt-4 border-t pt-3">
+          <div className="mt-4 border-t pt-3 text-black">
             <div className="flex justify-between">
               <span>Available Balance</span>
               <span>₱{balance}</span>
@@ -129,23 +173,13 @@ export default function WalletPage() {
 
             <div className="flex justify-between mt-1">
               <span>Cashback</span>
-              <span className="text-gray-600">₱{cashback}</span>
+              <span>₱{cashback}</span>
             </div>
           </div>
 
-          {/* FIXED BUTTON (NO GREEN) */}
           <button
-            onClick={() => {
-              const total = balance + cashback;
-
-              if (total <= 0) {
-                alert("No wallet balance");
-                return;
-              }
-
-              deductWallet(total);
-            }}
-            className="mt-6 w-full bg-blue-600 text-white py-2 rounded"
+            onClick={() => deductWallet(totalWallet, "Wallet")}
+            className="mt-6 w-full bg-blue-700 text-white py-2 rounded"
           >
             Test Book (Use Wallet Balance)
           </button>
@@ -155,24 +189,35 @@ export default function WalletPage() {
 
       {/* PAYMENT */}
       {view === "payment" && (
-        <div className="bg-white p-5 rounded-xl shadow">
+        <div className="p-5 rounded-xl shadow text-white" style={{ backgroundColor: "#3e4b5e" }}>
 
           <h2 className="font-semibold mb-4">💳 Payment Options</h2>
 
-          <button className="w-full p-3 bg-blue-500 text-white rounded-lg">
+          <button
+            onClick={() => payWithMethod("GCash")}
+            className="w-full p-3 bg-blue-500 rounded-lg"
+          >
             Pay with GCash
           </button>
 
-          <button className="w-full p-3 bg-gray-800 text-white rounded-lg mt-2">
+          <button
+            onClick={() => payWithMethod("Card")}
+            className="w-full p-3 bg-gray-800 rounded-lg mt-2"
+          >
             Pay with Card
           </button>
 
-          <button className="w-full p-3 bg-yellow-500 text-white rounded-lg mt-2">
+          <button
+            onClick={() => payWithMethod("PayPal")}
+            className="w-full p-3 bg-yellow-500 rounded-lg mt-2"
+          >
             Pay with PayPal
           </button>
 
-          {/* NO GREEN */}
-          <button className="w-full p-3 bg-blue-700 text-white rounded-lg mt-2">
+          <button
+            onClick={() => payWithMethod("Wallet")}
+            className="w-full p-3 bg-blue-700 rounded-lg mt-2"
+          >
             Pay with Wallet
           </button>
 
@@ -181,7 +226,7 @@ export default function WalletPage() {
 
       {/* TRANSACTIONS */}
       {view === "transactions" && (
-        <div className="bg-white p-5 rounded-xl shadow">
+        <div className="p-5 rounded-xl shadow text-black" style={{ backgroundColor: "#90a1b9" }}>
 
           <h2 className="font-semibold mb-4">📜 Transaction History</h2>
 
@@ -190,10 +235,15 @@ export default function WalletPage() {
 
               <div>
                 <p className="text-sm font-medium">{tx.title}</p>
-                <p className="text-xs text-gray-500">{tx.date}</p>
+                <p className="text-xs">{tx.date}</p>
+                {tx.paymentMethod && (
+                  <p className="text-xs italic">
+                    Method: {tx.paymentMethod}
+                  </p>
+                )}
               </div>
 
-              <p className={tx.type === "credit" ? "text-gray-600" : "text-red-500"}>
+              <p className={tx.type === "credit" ? "text-green-700" : "text-red-600"}>
                 {tx.type === "credit" ? "+" : "-"}₱{Math.abs(tx.amount)}
               </p>
 

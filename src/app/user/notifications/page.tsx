@@ -22,44 +22,47 @@ type Alert = {
   type: "booking" | "payment" | "sale";
   message: string;
   date: string;
+  read?: boolean;
 };
 
 export default function NotificationsPage() {
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<"bookings" | "alerts">(
-    "alerts"
-  );
+  const [activeTab, setActiveTab] = useState<"bookings" | "alerts">("alerts");
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // 🔔 ALERTS
+  // ALERTS (with read state)
   const [alerts, setAlerts] = useState<Alert[]>([
     {
       id: 1,
       type: "booking",
       message: "Your booking at Radisson Blu Cebu is confirmed!",
       date: "Today",
+      read: false,
     },
     {
       id: 2,
       type: "payment",
       message: "Payment of ₱6000 successful via GCash.",
       date: "Today",
+      read: false,
     },
     {
       id: 3,
       type: "sale",
       message: "You earned ₱250 cashback reward!",
       date: "1 day ago",
+      read: false,
     },
   ]);
 
-  // UI STATES
   const [search, setSearch] = useState("");
   const [showMenu, setShowMenu] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(alerts.length);
+
+  // AUTO BADGE COUNT (NO STATE NEEDED)
+  const unreadCount = alerts.filter((a) => !a.read).length;
 
   // FETCH BOOKINGS
   useEffect(() => {
@@ -90,29 +93,43 @@ export default function NotificationsPage() {
     return `${days} days ago`;
   };
 
-  // STATUS COLORS
+  // STATUS COLOR
   const statusColor = (status: string) => {
     switch (status) {
       case "confirmed":
-        return "text-green-600";
+        return "text-green-700";
       case "pending":
-        return "text-yellow-600";
+        return "text-yellow-700";
       case "cancelled":
-        return "text-red-600";
+        return "text-red-700";
       default:
-        return "text-gray-600";
+        return "text-gray-700";
     }
   };
 
+  // MARK ONE AS READ
+  const markAsRead = (id: number) => {
+    setAlerts((prev) =>
+      prev.map((a) =>
+        a.id === id ? { ...a, read: true } : a
+      )
+    );
+  };
+
+  // MARK ALL AS READ
+  const markAllAsRead = () => {
+    setAlerts((prev) =>
+      prev.map((a) => ({ ...a, read: true }))
+    );
+    setShowMenu(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-6 text-gray-900">
 
       {/* HEADER */}
       <div className="flex items-center gap-3 mb-6">
-        <Link
-          href="/user/dashboard"
-          className="text-2xl font-bold hover:text-blue-600"
-        >
+        <Link href="/user/dashboard" className="text-2xl font-bold">
           ←
         </Link>
 
@@ -126,35 +143,33 @@ export default function NotificationsPage() {
 
         <button
           onClick={() => setActiveTab("bookings")}
-          className={`px-4 py-2 rounded ${
+          className={`px-4 py-2 rounded font-semibold ${
             activeTab === "bookings"
               ? "bg-blue-600 text-white"
               : "bg-white"
           }`}
         >
-          🏨 Recent Bookings
+          🏨 Bookings
         </button>
 
-        {/* ALERTS + BADGE */}
         <button
           onClick={() => setActiveTab("alerts")}
-          className={`px-4 py-2 rounded relative ${
+          className={`px-4 py-2 rounded font-semibold relative ${
             activeTab === "alerts"
               ? "bg-blue-600 text-white"
               : "bg-white"
           }`}
         >
           🔔 Alerts ({unreadCount})
-
         </button>
 
       </div>
 
       {/* CONTENT */}
-      <div className="bg-white p-5 rounded shadow">
+      <div className="bg-white p-6 rounded shadow text-gray-900">
 
         {errorMsg && (
-          <p className="text-red-500 mb-3">
+          <p className="text-red-600 mb-3 font-medium">
             {errorMsg}
           </p>
         )}
@@ -163,12 +178,12 @@ export default function NotificationsPage() {
         {activeTab === "bookings" && (
           <div>
 
-            <h2 className="font-bold text-lg mb-4">
-              🏨 Full Bookings View
+            <h2 className="font-bold text-xl mb-4">
+              🏨 Your Bookings
             </h2>
 
             {bookings.length === 0 ? (
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-600">
                 No bookings found.
               </p>
             ) : (
@@ -180,44 +195,20 @@ export default function NotificationsPage() {
                     className="border rounded-xl p-5 bg-white shadow-sm"
                   >
 
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between">
                       <div>
                         <h2 className="text-lg font-bold">
                           {b.hotel_name}
                         </h2>
 
-                        <p className="text-sm text-gray-500 mt-1">
-                          {timeAgo(b.created_at)}
+                        <p className="text-sm text-gray-700">
+                          Created: {timeAgo(b.created_at)}
                         </p>
                       </div>
 
                       <p className={`font-bold ${statusColor(b.status)}`}>
                         {b.status.toUpperCase()}
                       </p>
-                    </div>
-
-                    <div className="mt-4 space-y-2 text-sm">
-
-                      <div className="flex justify-between">
-                        <p className="text-gray-500">Total Price</p>
-                        <p>₱{b.total_price?.toLocaleString() ?? "0"}</p>
-                      </div>
-
-                      <div className="flex justify-between">
-                        <p className="text-gray-500">Payment Method</p>
-                        <p>{b.payment_method ?? "N/A"}</p>
-                      </div>
-
-                      <div className="flex justify-between">
-                        <p className="text-gray-500">Paid Amount</p>
-                        <p>₱{b.payment_amount?.toLocaleString() ?? "0"}</p>
-                      </div>
-
-                      <div className="flex justify-between">
-                        <p className="text-gray-500">Used Cashback</p>
-                        <p>{b.used_wallet_cashback ? "Yes" : "No"}</p>
-                      </div>
-
                     </div>
 
                   </div>
@@ -236,13 +227,12 @@ export default function NotificationsPage() {
             {/* HEADER */}
             <div className="flex justify-between items-center mb-4">
 
-              <h2 className="font-bold text-lg">
+              <h2 className="font-bold text-xl">
                 🔔 Alerts
               </h2>
 
               <div className="flex gap-2 items-center relative">
 
-                {/* SEARCH */}
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -250,7 +240,6 @@ export default function NotificationsPage() {
                   className="border px-2 py-1 rounded text-sm"
                 />
 
-                {/* MENU */}
                 <button
                   onClick={() => setShowMenu(!showMenu)}
                   className="text-xl px-2"
@@ -262,10 +251,7 @@ export default function NotificationsPage() {
                   <div className="absolute right-0 top-10 bg-white border shadow rounded w-40 z-50">
 
                     <button
-                      onClick={() => {
-                        setUnreadCount(0);
-                        setShowMenu(false);
-                      }}
+                      onClick={markAllAsRead}
                       className="w-full text-left px-3 py-2 hover:bg-gray-100"
                     >
                       Mark all as read
@@ -283,14 +269,14 @@ export default function NotificationsPage() {
 
               {alerts
                 .filter((a) =>
-                  a.message
-                    .toLowerCase()
-                    .includes(search.toLowerCase())
+                  a.message.toLowerCase().includes(search.toLowerCase())
                 )
                 .map((a) => (
                   <div
                     key={a.id}
-                    className="border p-4 rounded-lg bg-gray-50 flex justify-between"
+                    className={`border p-4 rounded flex justify-between ${
+                      a.read ? "bg-white opacity-60" : "bg-gray-50"
+                    }`}
                   >
 
                     <div>
@@ -298,22 +284,27 @@ export default function NotificationsPage() {
                         {a.message}
                       </p>
 
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-600">
                         {a.date}
                       </p>
                     </div>
 
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        a.type === "booking"
-                          ? "bg-green-100 text-green-700"
-                          : a.type === "payment"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {a.type.toUpperCase()}
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+
+                      <span className="text-xs px-2 py-1 rounded bg-gray-200">
+                        {a.type.toUpperCase()}
+                      </span>
+
+                      {!a.read && (
+                        <button
+                          onClick={() => markAsRead(a.id)}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Mark as read
+                        </button>
+                      )}
+
+                    </div>
 
                   </div>
                 ))}
