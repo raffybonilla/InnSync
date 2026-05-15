@@ -1,9 +1,39 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function BookingSuccessPage() {
   const router = useRouter();
+  const inserted = useRef(false);
+
+  // ================= SUCCESS ALERT =================
+  useEffect(() => {
+    const createNotification = async () => {
+      if (inserted.current) return;
+      inserted.current = true;
+
+      try {
+        const { error } = await supabase.from("alerts").insert([
+          {
+            type: "booking",
+            message: "🎉 Booking successful!",
+            created_at: new Date().toISOString(),
+            read: false,
+          },
+        ]);
+
+        if (error) {
+          console.log("Alert insert error:", error.message);
+        }
+      } catch (err: any) {
+        console.log("Unexpected error:", err.message);
+      }
+    };
+
+    createNotification();
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

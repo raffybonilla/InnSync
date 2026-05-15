@@ -108,6 +108,21 @@ export default function HotelDetailPage() {
       checkOut: "",
     });
 
+    // 🔔 NOTIFICATION TRIGGER (ADDED)
+    console.log("🔔 Notification: User booked a room");
+    console.log(
+      `Hotel: ${hotel.name}, Room: ${selectedRoom.name}, Price: ₱${selectedRoom.price}`
+    );
+
+    // OPTIONAL (future use if you add notifications store)
+    // localStorage.setItem(
+    //   "latestNotification",
+    //   JSON.stringify({
+    //     type: "booking",
+    //     message: `Booked ${selectedRoom.name} at ${hotel.name}`,
+    //   })
+    // );
+
     setShowConfirm(false);
 
     router.push(`/hotels/${hotelId}/checkout`);
@@ -137,7 +152,6 @@ export default function HotelDetailPage() {
             className="border rounded-xl overflow-hidden shadow bg-white hover:scale-[1.01] transition"
           >
 
-            {/* ROOM IMAGE */}
             <img
               src={room.image}
               alt={room.name}

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { Eye, EyeOff, Menu } from "lucide-react";
 
@@ -23,12 +22,10 @@ export default function UserLogin() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
 
     setError("");
   };
@@ -39,7 +36,7 @@ export default function UserLogin() {
     setError("");
 
     try {
-      // LOGIN
+      // ================= LOGIN =================
       if (isLogin) {
         if (!formData.email || !formData.password) {
           setError("Email and password are required.");
@@ -47,11 +44,10 @@ export default function UserLogin() {
           return;
         }
 
-        const { data, error } =
-          await supabase.auth.signInWithPassword({
-            email: formData.email,
-            password: formData.password,
-          });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
         if (error) {
           setError(error.message);
@@ -59,24 +55,10 @@ export default function UserLogin() {
           return;
         }
 
-        if (data.user) {
-          localStorage.setItem(
-            "user",
-            JSON.stringify({
-              id: data.user.id,
-              email: data.user.email,
-              username:
-                data.user.user_metadata?.username || "",
-              fullName:
-                data.user.user_metadata?.full_name || "",
-            })
-          );
-
-          router.push("/user/dashboard");
-        }
+        router.push("/user/dashboard");
       }
 
-      // REGISTER
+      // ================= REGISTER =================
       else {
         if (
           !formData.fullName ||
@@ -89,18 +71,17 @@ export default function UserLogin() {
           return;
         }
 
-        const { data, error } =
-          await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
-            options: {
-              data: {
-                full_name: formData.fullName,
-                username: formData.username,
-                role: "user",
-              },
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: formData.fullName,
+              username: formData.username,
+              role: "user",
             },
-          });
+          },
+        });
 
         if (error) {
           setError(error.message);
@@ -108,26 +89,19 @@ export default function UserLogin() {
           return;
         }
 
-        if (data.user) {
-          alert(
-            "Registration successful. Please check your email to confirm."
-          );
+        alert("Registration successful. Please check your email to confirm.");
 
-          setFormData({
-            username: "",
-            email: "",
-            password: "",
-            fullName: "",
-          });
+        setFormData({
+          username: "",
+          email: "",
+          password: "",
+          fullName: "",
+        });
 
-          setIsLogin(true);
-        }
+        setIsLogin(true);
       }
     } catch (err: any) {
-      setError(
-        err?.message ||
-          "An error occurred. Please try again."
-      );
+      setError(err?.message || "An error occurred.");
     }
 
     setLoading(false);
@@ -138,7 +112,7 @@ export default function UserLogin() {
 
       <div className="w-full max-w-6xl bg-white shadow-2xl overflow-hidden">
 
-        {/* TOP HEADER */}
+        {/* ================= HEADER ================= */}
         <div className="border-b px-6 py-4 flex items-center justify-between">
 
           <button className="text-gray-700">
@@ -161,7 +135,7 @@ export default function UserLogin() {
 
         </div>
 
-        {/* MAIN CONTENT */}
+        {/* ================= MAIN ================= */}
         <div className="grid md:grid-cols-2 min-h-[700px]">
 
           {/* LEFT SIDE */}
@@ -169,40 +143,28 @@ export default function UserLogin() {
 
             {/* BRAND */}
             <div className="mb-8">
-
               <h1 className="text-5xl font-serif text-gray-700">
                 Inn Sync
               </h1>
-
               <p className="text-xs text-gray-500 mt-1">
                 Smart Hotel Booth Automation
               </p>
-
             </div>
 
             {/* TITLE */}
             <h2 className="text-4xl font-bold text-gray-800 mb-4 leading-tight">
-
-              {isLogin
-                ? "Welcome Back!"
-                : "Create Your Account"}
-
+              {isLogin ? "Welcome Back!" : "Create Your Account"}
             </h2>
 
             {/* DESCRIPTION */}
             <p className="text-gray-500 leading-relaxed mb-8 text-sm">
-
               {isLogin
-                ? "Sign in to manage your bookings, check in digitally, request services, and access personalized recommendations."
-                : "Create an account to enjoy seamless booking and hotel management services."}
-
+                ? "Sign in to manage bookings and access your dashboard."
+                : "Create an account to start booking hotels instantly."}
             </p>
 
             {/* FORM */}
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
 
               {/* REGISTER ONLY */}
               {!isLogin && (
@@ -212,7 +174,7 @@ export default function UserLogin() {
                     placeholder="Full Name"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 px-4 py-3 text-black placeholder-gray-400 outline-none focus:border-black transition"
+                    className="w-full border px-4 py-3 text-black"
                   />
 
                   <input
@@ -220,7 +182,7 @@ export default function UserLogin() {
                     placeholder="Username"
                     value={formData.username}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 px-4 py-3 text-black placeholder-gray-400 outline-none focus:border-black transition"
+                    className="w-full border px-4 py-3 text-black"
                   />
                 </>
               )}
@@ -232,32 +194,25 @@ export default function UserLogin() {
                 placeholder="Email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full border border-gray-300 px-4 py-3 text-black placeholder-gray-400 outline-none focus:border-black transition"
+                className="w-full border px-4 py-3 text-black"
               />
 
               {/* PASSWORD */}
               <div className="relative">
 
                 <input
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 px-4 py-3 pr-12 text-black placeholder-gray-400 outline-none focus:border-black transition"
+                  className="w-full border px-4 py-3 pr-12 text-black"
                 />
 
-                {/* EYE BUTTON */}
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPassword(!showPassword)
-                  }
-                  className="absolute right-4 top-3.5 text-gray-500"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-3 text-gray-500"
                 >
                   {showPassword ? (
                     <EyeOff size={18} />
@@ -268,37 +223,16 @@ export default function UserLogin() {
 
               </div>
 
-              {/* EXTRA OPTIONS */}
-              {isLogin && (
-                <div className="flex items-center justify-between text-sm text-gray-500">
-
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" />
-                    Remember me
-                  </label>
-
-                  <button
-                    type="button"
-                    className="hover:text-black transition"
-                  >
-                    Forgot Password?
-                  </button>
-
-                </div>
-              )}
-
               {/* ERROR */}
               {error && (
-                <p className="text-red-500 text-sm">
-                  {error}
-                </p>
+                <p className="text-red-500 text-sm">{error}</p>
               )}
 
-              {/* SUBMIT BUTTON */}
+              {/* SUBMIT */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gray-700 text-white py-3 hover:bg-black transition duration-300 tracking-wide"
+                className="w-full bg-gray-700 text-white py-3 hover:bg-black transition"
               >
                 {loading
                   ? "Loading..."
@@ -313,9 +247,7 @@ export default function UserLogin() {
             <div className="mt-6 text-center">
 
               <button
-                onClick={() =>
-                  setIsLogin(!isLogin)
-                }
+                onClick={() => setIsLogin(!isLogin)}
                 className="text-blue-600 hover:underline text-sm"
               >
                 {isLogin
@@ -336,14 +268,13 @@ export default function UserLogin() {
               className="w-full h-full object-cover"
             />
 
-            {/* OVERLAY */}
             <div className="absolute inset-0 bg-black/10"></div>
 
           </div>
 
         </div>
 
-        {/* FOOTER */}
+        {/* ================= FOOTER ================= */}
         <div className="border-t">
 
           <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 text-xs text-gray-500 gap-2">

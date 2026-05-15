@@ -9,11 +9,19 @@ export default function UserProfile() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [loading, setLoading] = useState(true);
-
   const [profilePic, setProfilePic] = useState<string | null>(null);
+
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // EDIT STATES
+  const [editField, setEditField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [confirmValue, setConfirmValue] = useState("");
+  const [confirmSave, setConfirmSave] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
+    username: "",
     email: "",
     phone: "",
     gender: "",
@@ -21,16 +29,15 @@ export default function UserProfile() {
     password: "",
   });
 
-  // ================= LOAD USER PROFILE =================
+  // ================= LOAD PROFILE =================
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: userData } = await supabase.auth.getUser();
-
       if (!userData?.user) return;
 
       const userId = userData.user.id;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
@@ -39,6 +46,7 @@ export default function UserProfile() {
       if (data) {
         setForm({
           fullName: data.full_name || "",
+          username: data.username || "",
           email: data.email || "",
           phone: data.phone || "",
           gender: data.gender || "",
@@ -55,14 +63,68 @@ export default function UserProfile() {
     fetchProfile();
   }, []);
 
-  // ================= HANDLE INPUT =================
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // ================= OPEN EDIT =================
+  const openEdit = (field: string, value: string) => {
+    setEditField(field);
+    setEditValue(value);
+    setConfirmValue("");
   };
 
-  // ================= IMAGE UPLOAD =================
+  // ================= SAVE =================
+  const saveChanges = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user || !editField) return;
+
+    const userId = userData.user.id;
+
+    // 🔐 PASSWORD (Auth table)
+    if (editField === "password") {
+      const { error } = await supabase.auth.updateUser({
+        password: editValue,
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      setShowSuccess(true);
+      setConfirmSave(false);
+      setEditField(null);
+      return;
+    }
+
+    // ❌ EMAIL IS LOCKED (safety)
+    if (editField === "email") {
+      alert("Email is locked and cannot be edited here.");
+      return;
+    }
+
+    // 🧾 NORMAL PROFILE UPDATE
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        [editField]: editValue,
+        updated_at: new Date(),
+      })
+      .eq("id", userId);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [editField]: editValue,
+    }));
+
+    setShowSuccess(true);
+    setConfirmSave(false);
+    setEditField(null);
+  };
+
+  // ================= IMAGE =================
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -72,32 +134,6 @@ export default function UserProfile() {
       setProfilePic(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
-
-  // ================= SAVE PROFILE =================
-  const handleSave = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-
-    if (!userData?.user) return;
-
-    const userId = userData.user.id;
-
-    const { error } = await supabase.from("profiles").upsert({
-      id: userId,
-      full_name: form.fullName,
-      email: form.email,
-      phone: form.phone,
-      gender: form.gender,
-      birthday: form.birthday,
-      avatar_url: profilePic,
-      updated_at: new Date(),
-    });
-
-    if (error) {
-      alert("Error saving profile: " + error.message);
-    } else {
-      alert("Profile updated successfully!");
-    }
   };
 
   if (loading) {
@@ -111,31 +147,42 @@ export default function UserProfile() {
   return (
     <div className="min-h-screen bg-gray-100 p-6 text-gray-900">
 
+      {/* SUCCESS */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded text-center w-80">
+            <h2 className="text-xl font-bold text-green-600">
+              Profile Updated!
+            </h2>
+            <button
+              onClick={() => setShowSuccess(false)}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto">
 
         {/* BACK */}
         <button
           onClick={() => router.push("/user/dashboard")}
-          className="mb-4 text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+          className="mb-4 text-sm bg-gray-200 px-3 py-1 rounded"
         >
           ← Back to Dashboard
         </button>
 
         <div className="bg-white p-6 rounded shadow">
 
-          <h1 className="text-2xl font-bold mb-6">
-            My Profile
-          </h1>
+          <h1 className="text-2xl font-bold mb-6">My Profile</h1>
 
           {/* PROFILE PIC */}
           <div className="flex flex-col items-center mb-6">
-
             <div className="w-24 h-24 rounded-full bg-blue-600 overflow-hidden flex items-center justify-center text-white text-2xl">
               {profilePic ? (
-                <img
-                  src={profilePic}
-                  className="w-full h-full object-cover"
-                />
+                <img src={profilePic} className="w-full h-full object-cover" />
               ) : (
                 "U"
               )}
@@ -143,7 +190,7 @@ export default function UserProfile() {
 
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="mt-3 text-blue-600 text-sm hover:underline"
+              className="mt-2 text-blue-600 text-sm"
             >
               Change Profile Picture
             </button>
@@ -151,80 +198,176 @@ export default function UserProfile() {
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/*"
               onChange={handleImageChange}
               className="hidden"
             />
-
           </div>
 
-          {/* FORM */}
+          {/* ================= FIELDS ================= */}
+
           <div className="space-y-3">
 
-            <input
-              name="fullName"
-              placeholder="Full Name"
-              value={form.fullName}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            />
+            {/* FULL NAME */}
+            <div className="flex justify-between border p-3 rounded">
+              <div>
+                <p className="text-sm text-gray-500">Full Name</p>
+                <p className="font-medium">{form.fullName}</p>
+              </div>
+              <span onClick={() => openEdit("full_name", form.fullName)} className="text-blue-600 text-sm cursor-pointer">
+                Edit
+              </span>
+            </div>
 
-            <input
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            />
+            {/* USERNAME */}
+            <div className="flex justify-between border p-3 rounded">
+              <div>
+                <p className="text-sm text-gray-500">Username</p>
+                <p className="font-medium">{form.username}</p>
+              </div>
+              <span onClick={() => openEdit("username", form.username)} className="text-blue-600 text-sm cursor-pointer">
+                Edit
+              </span>
+            </div>
 
-            <input
-              name="phone"
-              placeholder="Phone Number"
-              value={form.phone}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            />
+            {/* EMAIL (LOCKED) */}
+            <div className="flex justify-between border p-3 rounded">
+              <div>
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="font-medium">{form.email}</p>
+              </div>
+              <span className="text-gray-400 text-sm">
+                Locked
+              </span>
+            </div>
 
-            <select
-              name="gender"
-              value={form.gender}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            >
-              <option value="">Select Gender</option>
-              <option>Male</option>
-              <option>Female</option>
-            </select>
+            {/* PHONE */}
+            <div className="flex justify-between border p-3 rounded">
+              <div>
+                <p className="text-sm text-gray-500">Mobile</p>
+                <p className="font-medium">{form.phone}</p>
+              </div>
+              <span onClick={() => openEdit("phone", form.phone)} className="text-blue-600 text-sm cursor-pointer">
+                Edit
+              </span>
+            </div>
 
-            <input
-              type="date"
-              name="birthday"
-              value={form.birthday}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            />
+            {/* GENDER */}
+            <div className="flex justify-between border p-3 rounded">
+              <div>
+                <p className="text-sm text-gray-500">Gender</p>
+                <p className="font-medium">{form.gender}</p>
+              </div>
+              <span onClick={() => openEdit("gender", form.gender)} className="text-blue-600 text-sm cursor-pointer">
+                Edit
+              </span>
+            </div>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="New Password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            />
+            {/* BIRTHDAY */}
+            <div className="flex justify-between border p-3 rounded">
+              <div>
+                <p className="text-sm text-gray-500">Birthday</p>
+                <p className="font-medium">{form.birthday}</p>
+              </div>
+              <span onClick={() => openEdit("birthday", form.birthday)} className="text-blue-600 text-sm cursor-pointer">
+                Edit
+              </span>
+            </div>
 
-            <button
-              onClick={handleSave}
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-            >
-              Save Changes
-            </button>
+            {/* PASSWORD */}
+            <div className="flex justify-between border p-3 rounded">
+              <div>
+                <p className="text-sm text-gray-500">Password</p>
+                <p className="font-medium">••••••••</p>
+              </div>
+              <span onClick={() => openEdit("password", "")} className="text-blue-600 text-sm cursor-pointer">
+                Edit
+              </span>
+            </div>
 
           </div>
-
         </div>
-
       </div>
+
+      {/* ================= EDIT MODAL ================= */}
+      {editField && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded w-80">
+
+            <h2 className="font-bold mb-3">
+              Edit {editField}
+            </h2>
+
+            <input
+              type={editField === "password" ? "password" : "text"}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="w-full border p-2 rounded mb-3"
+              placeholder="New value"
+            />
+
+            {(editField === "username" || editField === "password") && (
+              <input
+                type={editField === "password" ? "password" : "text"}
+                value={confirmValue}
+                onChange={(e) => setConfirmValue(e.target.value)}
+                className="w-full border p-2 rounded"
+                placeholder={`Confirm ${editField}`}
+              />
+            )}
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setEditField(null)}>
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  if (
+                    (editField === "username" || editField === "password") &&
+                    editValue !== confirmValue
+                  ) {
+                    alert("Values do not match!");
+                    return;
+                  }
+                  setConfirmSave(true);
+                }}
+                className="bg-blue-600 text-white px-3 py-1 rounded"
+              >
+                Save
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ================= CONFIRM MODAL ================= */}
+      {confirmSave && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded text-center w-80">
+
+            <h2 className="font-bold">
+              Are you sure you want to save changes?
+            </h2>
+
+            <div className="flex justify-center gap-3 mt-5">
+
+              <button onClick={() => setConfirmSave(false)}>
+                No
+              </button>
+
+              <button
+                onClick={saveChanges}
+                className="bg-green-600 text-white px-4 py-1 rounded"
+              >
+                Yes
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
