@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 
 const allowedRoles = ['admin', 'manager'];
 
@@ -25,6 +25,7 @@ export default function AdminLogin() {
         return;
       }
 
+      const supabase = createSupabaseClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
