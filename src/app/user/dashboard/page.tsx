@@ -22,14 +22,14 @@ function LogoutModal({
         <div className="flex justify-center gap-4">
           <button
             onClick={onConfirm}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            className="bg-red-600 text-white px-4 py-2 rounded"
           >
             Yes
           </button>
 
           <button
             onClick={onCancel}
-            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            className="bg-gray-300 px-4 py-2 rounded"
           >
             No
           </button>
@@ -48,7 +48,7 @@ function TermsModal({ onAccept }: { onAccept: () => void }) {
       <div className="bg-white max-w-lg w-full p-6 rounded-xl shadow-lg">
         <h1 className="text-2xl font-bold mb-3">Terms and Conditions</h1>
 
-        <div className="text-sm text-gray-700 space-y-2 max-h-60 overflow-y-auto border p-3 rounded">
+        <div className="text-sm text-gray-600 space-y-2 max-h-60 overflow-y-auto border p-3 rounded">
           <p>By using Inn Sync, you agree to hotel booking rules.</p>
 
           <ul className="list-disc pl-5">
@@ -70,10 +70,8 @@ function TermsModal({ onAccept }: { onAccept: () => void }) {
         <button
           disabled={!checked}
           onClick={onAccept}
-          className={`mt-4 w-full py-2 rounded text-white transition ${
-            checked
-              ? "bg-blue-600 hover:bg-blue-700"
-              : "bg-gray-400 cursor-not-allowed"
+          className={`mt-4 w-full py-2 rounded text-white ${
+            checked ? "bg-blue-600" : "bg-gray-400"
           }`}
         >
           Accept & Continue
@@ -83,6 +81,40 @@ function TermsModal({ onAccept }: { onAccept: () => void }) {
   );
 }
 
+/* ===================== HOTEL DATA ===================== */
+const cebuHotels = [
+  {
+    id: 1,
+    name: "Radisson Blu Cebu",
+    image:
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop",
+    rating: 4.8,
+    details: "Deluxe Room • Pool • Breakfast • City View",
+    sqm: 35,
+    guests: 2,
+  },
+  {
+    id: 2,
+    name: "Shangri-La Mactan",
+    image:
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?q=80&w=1200&auto=format&fit=crop",
+    rating: 4.9,
+    details: "Ocean View • Beach Access • Breakfast",
+    sqm: 45,
+    guests: 3,
+  },
+  {
+    id: 3,
+    name: "Quest Hotel Cebu",
+    image:
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=1200&auto=format&fit=crop",
+    rating: 4.3,
+    details: "Standard Room • WiFi • City Center",
+    sqm: 28,
+    guests: 2,
+  },
+];
+
 /* ===================== MAIN ===================== */
 export default function DashboardPage() {
   const router = useRouter();
@@ -91,21 +123,46 @@ export default function DashboardPage() {
   const [showLogout, setShowLogout] = useState(false);
 
   const [userName, setUserName] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
 
   const [currentBookings, setCurrentBookings] = useState<any[]>([]);
   const [historyBookings, setHistoryBookings] = useState<any[]>([]);
 
   const [index, setIndex] = useState(0);
+  const [hotelIndex, setHotelIndex] = useState(0);
 
-  const [selectedHistory, setSelectedHistory] = useState<any | null>(null);
+  /* ===================== TERMS ===================== */
+  useEffect(() => {
+    const accepted = localStorage.getItem("termsAccepted");
+
+    if (!accepted) {
+      setShowTerms(true);
+    }
+  }, []);
+
+  const acceptTerms = () => {
+    localStorage.setItem("termsAccepted", "true");
+    setShowTerms(false);
+  };
 
   /* ===================== USER ===================== */
   useEffect(() => {
     const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
+      const { data: userData } = await supabase.auth.getUser();
 
-      if (data?.user) {
-        setUserName("User");
+      if (!userData?.user) return;
+
+      const userId = userData.user.id;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", userId)
+        .single();
+
+      if (data) {
+        setUserName(data.full_name);
+        setAvatar(data.avatar_url);
       }
     };
 
@@ -115,16 +172,20 @@ export default function DashboardPage() {
   /* ===================== BOOKINGS ===================== */
   useEffect(() => {
     const fetchBookings = async () => {
-      const { data } = await supabase.from("bookings").select("*");
+      const { data: userData } = await supabase.auth.getUser();
+
+      if (!userData?.user) return;
+
+      const userId = userData.user.id;
+
+      const { data } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("user_id", userId);
 
       if (data) {
-        setCurrentBookings(
-          data.filter((b: any) => b.status === "current")
-        );
-
-        setHistoryBookings(
-          data.filter((b: any) => b.status === "completed")
-        );
+        setCurrentBookings(data.filter((b) => b.status === "current"));
+        setHistoryBookings(data.filter((b) => b.status === "completed"));
       }
     };
 
@@ -132,173 +193,213 @@ export default function DashboardPage() {
   }, []);
 
   const booking = currentBookings[index];
+  const selectedHotel = cebuHotels[hotelIndex];
 
   return (
     <>
-      {/* ===================== LOGOUT MODAL ===================== */}
+      {/* ===================== TERMS ===================== */}
+      {showTerms && <TermsModal onAccept={acceptTerms} />}
+
+      {/* ===================== LOGOUT ===================== */}
       {showLogout && (
         <LogoutModal
           onCancel={() => setShowLogout(false)}
-          onConfirm={() => router.push("/login")}
+          onConfirm={async () => {
+            await supabase.auth.signOut();
+            router.push("/login");
+          }}
         />
       )}
 
-      {/* ===================== TERMS MODAL ===================== */}
-      {showTerms && (
-        <TermsModal onAccept={() => setShowTerms(false)} />
-      )}
-
       <div className="flex min-h-screen bg-gray-100 text-black">
-        {/* ================= SIDEBAR ================= */}
-        <div className="w-52 bg-[#3a4659] text-white p-4 flex flex-col min-h-screen shadow-lg">
-          {/* USER AREA */}
-          <div className="text-center mb-6">
-            <div className="w-14 h-14 bg-white rounded-full mx-auto" />
+        {/* ===================== SIDEBAR ===================== */}
+        <div className="w-56 bg-[#3a4659] text-white p-4 flex flex-col">
+          {/* PROFILE */}
+          <div
+            onClick={() => router.push("/user/profile")}
+            className="mb-6 cursor-pointer text-center"
+          >
+            <div className="w-14 h-14 mx-auto rounded-full bg-white overflow-hidden flex items-center justify-center">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                "U"
+              )}
+            </div>
 
-            <p className="mt-3 font-semibold text-lg">
+            <p className="mt-2 font-semibold">
               {userName || "User"}
             </p>
-
-            {/* PROFILE */}
-            <button
-              onClick={() => router.push("/user/profile")}
-              className="text-xs text-blue-200 hover:underline mt-1"
-            >
-              Edit Profile
-            </button>
           </div>
 
           {/* NAVIGATION */}
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2 text-sm flex-1">
             <button
               onClick={() => router.push("/user/dashboard")}
-              className="w-full p-3 text-left rounded bg-white/20 font-bold hover:bg-white/30 transition"
+              className="text-left p-2 hover:bg-white/10 rounded"
             >
               Dashboard
             </button>
 
             <button
               onClick={() => router.push("/user/inbox")}
-              className="w-full p-3 text-left rounded hover:bg-white/10 transition"
+              className="text-left p-2 hover:bg-white/10 rounded"
             >
               Inbox
             </button>
 
             <button
               onClick={() => router.push("/user/wallet")}
-              className="w-full p-3 text-left rounded hover:bg-white/10 transition"
+              className="text-left p-2 hover:bg-white/10 rounded"
             >
               Wallet
             </button>
 
             <button
               onClick={() => router.push("/user/notifications")}
-              className="w-full p-3 text-left rounded hover:bg-white/10 transition"
+              className="text-left p-2 hover:bg-white/10 rounded"
             >
               Notifications
             </button>
 
             <button
               onClick={() => router.push("/user/settings")}
-              className="w-full p-3 text-left rounded hover:bg-white/10 transition"
+              className="text-left p-2 hover:bg-white/10 rounded"
             >
               Settings
             </button>
 
-            <button
-              onClick={() => router.push("/user/support")}
-              className="w-full p-3 text-left rounded hover:bg-white/10 transition"
-            >
-              Help & Support
-            </button>
-          </div>
+            <div className="mt-auto pt-6 flex flex-col gap-2">
+              <button
+                onClick={() => router.push("/user/help")}
+                className="text-left p-2 hover:bg-white/10 rounded"
+              >
+                Help & Support
+              </button>
 
-          {/* LOGOUT */}
-          <div className="mt-auto pt-6">
-            <button
-              onClick={() => setShowLogout(true)}
-              className="w-full p-3 text-left rounded text-red-300 hover:bg-red-500/20 transition"
-            >
-              Logout
-            </button>
+              <button
+                onClick={() => setShowLogout(true)}
+                className="text-left p-2 hover:bg-white/10 rounded text-red-200"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ================= MAIN CONTENT ================= */}
-        <div className="flex-1 p-8 pb-24 overflow-y-auto">
+        {/* ===================== MAIN ===================== */}
+        <div className="flex-1 p-8 pb-32 overflow-y-auto">
+          {/* HEADER */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold">
+              Inn Sync
+            </h1>
+
+            <div className="flex justify-center mt-2">
+              <div className="w-1/2 border-b border-gray-400"></div>
+            </div>
+          </div>
+
           <h1 className="text-3xl font-bold mb-6">
             👋 Welcome, {userName || "User"}
           </h1>
 
-          {/* ================= CURRENT BOOKING ================= */}
+          {/* ===================== CEBU HOTELS ===================== */}
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-bold">Current Booking</h2>
-
-            <button
-              onClick={() => router.push("/hotels")}
-              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-            >
-              Browse Hotels
-            </button>
+            <h2 className="text-xl font-bold">
+              Cebu Hotels
+            </h2>
           </div>
 
-          {booking ? (
-            <div className="bg-white p-6 rounded-2xl shadow mb-8 border">
+          <div className="relative bg-white rounded-2xl shadow p-5 mb-10">
+            <button
+              onClick={() =>
+                setHotelIndex((prev) =>
+                  prev === 0
+                    ? cebuHotels.length - 1
+                    : prev - 1
+                )
+              }
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white shadow px-3 py-1 rounded-full text-2xl"
+            >
+              ‹
+            </button>
+
+            <button
+              onClick={() =>
+                setHotelIndex((prev) =>
+                  prev === cebuHotels.length - 1
+                    ? 0
+                    : prev + 1
+                )
+              }
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white shadow px-3 py-1 rounded-full text-2xl"
+            >
+              ›
+            </button>
+
+            <img
+              src={selectedHotel.image}
+              className="w-full h-72 object-cover rounded-xl"
+            />
+
+            <div className="mt-4">
               <h3 className="text-2xl font-bold">
-                {booking.hotel_name}
+                {selectedHotel.name}
               </h3>
 
               <p className="text-gray-700 mt-2">
-                {booking.details}
+                {selectedHotel.details}
               </p>
 
-              <p className="text-sm text-gray-500 mt-3">
-                ⭐ {booking.rating || 4.5}
-              </p>
-
-              <div className="flex gap-3 mt-5">
-                <button
-                  onClick={() => router.push("/user/inbox")}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  Message Hotel
-                </button>
-
-                <button
-                  onClick={() => setShowTerms(true)}
-                  className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
-                >
-                  View Terms
-                </button>
+              <div className="flex gap-5 mt-3 text-sm text-gray-700">
+                <p>⭐ {selectedHotel.rating}</p>
+                <p>{selectedHotel.sqm} sqm</p>
+                <p>{selectedHotel.guests} Guests</p>
               </div>
-            </div>
-          ) : (
-            <div className="bg-white p-6 rounded-xl shadow mb-8">
-              <p className="text-gray-500">
-                No current booking
-              </p>
-            </div>
-          )}
 
-          {/* ================= BOOKING HISTORY ================= */}
-          <h2 className="text-xl font-bold mb-3">
-            Booking History
-          </h2>
+              <button
+                onClick={() => router.push(selectedHotel?.id ? `/hotels/${selectedHotel.id}` : "#")}
+                className="mt-5 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Book Now!
+              </button>
+            </div>
+          </div>
 
-          <div className="bg-white p-5 rounded-2xl shadow space-y-4 border">
+          {/* ===================== BOOKING HISTORY ===================== */}
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-xl font-bold">
+              Booking History
+            </h2>
+
+            <button
+              onClick={() =>
+                router.push("/user/booking-history")
+              }
+              className="text-blue-600 hover:underline"
+            >
+              See Booking History
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
             {(historyBookings.length > 0
               ? historyBookings
               : [
                   {
+                    room: "Deluxe Room",
                     hotel_name: "Radisson Blu Cebu",
-                    details: "Deluxe Room",
                     sqm: 35,
                     guests: 2,
                     rating: 4.8,
                   },
                   {
+                    room: "Ocean View Room",
                     hotel_name: "Shangri-La Mactan",
-                    details: "Ocean View Room",
                     sqm: 45,
                     guests: 3,
                     rating: 4.9,
@@ -307,28 +408,25 @@ export default function DashboardPage() {
             ).map((b: any, i: number) => (
               <div
                 key={i}
-                className="flex justify-between items-center border-b pb-3"
+                className="grid grid-cols-5 gap-4 p-4 border-b text-sm items-center"
               >
-                <div>
-                  <p className="font-bold text-lg">
-                    {b.hotel_name}
-                  </p>
-
-                  <p className="text-sm text-gray-600">
-                    {b.details} • {b.sqm} sqm • {b.guests} guests
-                  </p>
+                <div className="font-semibold">
+                  {b.room}
                 </div>
 
-                <div className="text-right">
-                  <p className="font-semibold">
-                    ⭐ {b.rating}
-                  </p>
+                <div>{b.hotel_name}</div>
 
+                <div>
+                  {b.sqm} sqm • {b.guests} guests
+                </div>
+
+                <div>⭐ {b.rating}</div>
+
+                <div className="text-right">
                   <button
-                    onClick={() => setSelectedHistory(b)}
-                    className="text-blue-600 text-sm hover:underline mt-1"
+                    className="text-blue-600 hover:underline"
                   >
-                    View Details
+                    See Details
                   </button>
                 </div>
               </div>
@@ -337,26 +435,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ================= FOOTER ================= */}
-      <footer className="fixed bottom-0 left-52 right-0 bg-[#3a4659] text-white text-xs py-4 px-6 flex justify-between z-40">
-        <button
-          onClick={() => router.push("/terms")}
-          className="hover:underline"
-        >
+      {/* ===================== FOOTER ===================== */}
+      <footer className="fixed bottom-0 left-56 right-0 bg-[#3a4659] text-white text-xs py-4 px-6 flex justify-between items-center">
+        <button onClick={() => router.push("/terms")}>
           Terms & Conditions
         </button>
 
-        <button
-          onClick={() => router.push("/privacy")}
-          className="hover:underline"
-        >
+        <button onClick={() => router.push("/privacy")}>
           Privacy Policy
         </button>
 
-        <button
-          onClick={() => router.push("/cookies")}
-          className="hover:underline"
-        >
+        <button onClick={() => router.push("/cookies")}>
           Cookie Policy
         </button>
       </footer>

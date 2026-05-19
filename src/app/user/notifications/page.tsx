@@ -7,289 +7,181 @@ import { supabase } from "@/lib/supabaseClient";
 type Booking = {
   id: number;
   hotel_name: string;
-  status: "active" | "finished";
+  status: "confirmed" | "pending" | "cancelled";
   created_at: string;
 
-  check_in?: string;
-  check_out?: string;
+  total_price?: number;
+  payment_method?: string;
+  payment_amount?: number;
+  used_wallet_cashback?: boolean;
 };
 
 export default function NotificationsPage() {
-  const [activeTab, setActiveTab] =
-    useState<"active" | "finished">("active");
-
+  const [bookingTab, setBookingTab] = useState<"active" | "finished">("active");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ===================== FETCH BOOKINGS =====================
-  const fetchBookings = async () => {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      setErrorMsg(error.message);
-      return;
-    }
-
-    const today = new Date();
-
-    const updatedBookings =
-      data?.map((booking) => {
-        const checkoutDate = booking.check_out
-          ? new Date(booking.check_out)
-          : null;
-
-        let status: "active" | "finished" = "active";
-
-        if (checkoutDate && today > checkoutDate) {
-          status = "finished";
-        }
-
-        return {
-          ...booking,
-          status,
-        };
-      }) || [];
-
-    setBookings(updatedBookings);
-  };
-
-  // ===================== INIT LOAD =====================
   useEffect(() => {
+    const fetchBookings = async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setErrorMsg(error.message);
+        return;
+      }
+
+      setBookings(data ?? []);
+    };
+
     fetchBookings();
   }, []);
 
-  // ===================== FILTER BOOKINGS =====================
-  const filteredBookings = bookings.filter(
-    (b) => b.status === activeTab
+  const timeAgo = (date: string) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) return "Today";
+    if (days === 1) return "1 day ago";
+    return `${days} days ago`;
+  };
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "text-green-700";
+      case "pending":
+        return "text-yellow-700";
+      case "cancelled":
+        return "text-red-700";
+      default:
+        return "text-gray-700";
+    }
+  };
+
+  const activeBookings = bookings.filter(
+    (b) => b.status === "confirmed" || b.status === "pending"
   );
 
-  // ===================== SAMPLE ROOMS (FOR FINISHED ONLY) =====================
-  const getRoomsByHotel = (hotelName: string) => {
-    const rooms: Record<string, { name: string; desc: string }[]> = {
-      "Radisson Blu Cebu": [
-        {
-          name: "Deluxe Room",
-          desc: "₱6000 • 2 Pax • Breakfast • WiFi",
-        },
-        {
-          name: "Executive Suite",
-          desc: "₱9000 • 3 Pax • Lounge Access • Sea View",
-        },
-      ],
-      "Quest Hotel Cebu": [
-        {
-          name: "Standard Room",
-          desc: "₱3500 • 2 Pax • WiFi • City View",
-        },
-        {
-          name: "Superior Room",
-          desc: "₱4500 • 2 Pax • Breakfast • Pool Access",
-        },
-      ],
-      "Shangri-La Mactan": [
-        {
-          name: "Ocean View Room",
-          desc: "₱12000 • 2 Pax • Beach Access • Breakfast",
-        },
-        {
-          name: "Garden Suite",
-          desc: "₱15000 • 3 Pax • Premium View • Lounge",
-        },
-      ],
-      "Marco Polo Plaza Cebu": [
-        {
-          name: "Deluxe Mountain View",
-          desc: "₱5000 • 2 Pax • Mountain View • WiFi",
-        },
-        {
-          name: "Suite Room",
-          desc: "₱8000 • 3 Pax • Lounge Access • City View",
-        },
-      ],
-      "Waterfront Cebu City Hotel & Casino": [
-        {
-          name: "Standard Room",
-          desc: "₱4000 • 2 Pax • Casino Access • WiFi",
-        },
-        {
-          name: "Executive Suite",
-          desc: "₱7500 • 3 Pax • Premium Amenities",
-        },
-      ],
-      "Bai Hotel Cebu": [
-        {
-          name: "Deluxe Room",
-          desc: "₱5500 • 2 Pax • City View • Breakfast",
-        },
-        {
-          name: "Corner Suite",
-          desc: "₱9500 • 3 Pax • Lounge Access • Skyline View",
-        },
-      ],
-    };
-
-    return rooms[hotelName] || [];
-  };
+  const finishedBookings = bookings.filter(
+    (b) => b.status === "cancelled"
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 text-gray-900">
 
       {/* HEADER */}
       <div className="flex items-center gap-3 mb-6">
-
-        <Link
-          href="/user/dashboard"
-          className="text-2xl font-bold"
-        >
+        <Link href="/user/dashboard" className="text-2xl font-bold">
           ←
         </Link>
 
-        <h1 className="text-3xl font-bold">
-          Notifications
-        </h1>
-
+        <h1 className="text-2xl font-bold">Bookings</h1>
       </div>
 
-      {/* TABS */}
-      <div className="flex gap-3 mb-6">
-
-        <button
-          onClick={() => setActiveTab("active")}
-          className={`px-5 py-2 rounded-lg font-semibold transition ${
-            activeTab === "active"
-              ? "bg-green-600 text-white"
-              : "bg-white border"
-          }`}
-        >
-          Active
-        </button>
-
-        <button
-          onClick={() => setActiveTab("finished")}
-          className={`px-5 py-2 rounded-lg font-semibold transition ${
-            activeTab === "finished"
-              ? "bg-blue-600 text-white"
-              : "bg-white border"
-          }`}
-        >
-          Finished
-        </button>
-
-      </div>
-
-      {/* MAIN CONTENT */}
-      <div className="bg-white rounded-2xl shadow-md p-6">
+      {/* CONTENT */}
+      <div className="bg-white p-6 rounded shadow">
 
         {errorMsg && (
-          <p className="text-red-600 mb-4">
+          <p className="text-red-600 mb-3 font-medium">
             {errorMsg}
           </p>
         )}
 
-        {filteredBookings.length === 0 ? (
-          <div className="text-center py-10">
+        <h2 className="font-bold text-xl mb-4">
+          🏨 Your Bookings
+        </h2>
 
-            <p className="text-gray-500 mb-4">
-              No {activeTab} bookings found.
-            </p>
+        {/* TOGGLE */}
+        <div className="flex gap-3 mb-5">
+          <button
+            onClick={() => setBookingTab("active")}
+            className={`px-4 py-2 rounded font-semibold ${
+              bookingTab === "active"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            Active
+          </button>
 
-            <Link
-              href="/hotels"
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg"
-            >
-              Browse Hotels
-            </Link>
+          <button
+            onClick={() => setBookingTab("finished")}
+            className={`px-4 py-2 rounded font-semibold ${
+              bookingTab === "finished"
+                ? "bg-gray-700 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            Finished
+          </button>
+        </div>
 
-          </div>
-        ) : (
-          <div className="space-y-4">
+        {/* ACTIVE */}
+        {bookingTab === "active" ? (
+          activeBookings.length === 0 ? (
+            <p className="text-gray-600">No active bookings.</p>
+          ) : (
+            <div className="space-y-4">
+              {activeBookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="border rounded-xl p-5 bg-white shadow-sm"
+                >
+                  <div className="flex justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold">
+                        {b.hotel_name}
+                      </h2>
 
-            {filteredBookings.map((b) => (
-              <div
-                key={b.id}
-                className="border border-gray-200 p-5 rounded-2xl bg-gray-50 shadow-sm"
-              >
-
-                <div className="space-y-2">
-
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {b.hotel_name}
-                  </h2>
-
-                  <p className="text-sm text-gray-700">
-                    📅 Check-in:{" "}
-                    <span className="font-semibold">
-                      {b.check_in || "N/A"}
-                    </span>
-                  </p>
-
-                  <p className="text-sm text-gray-700">
-                    🏁 Check-out:{" "}
-                    <span className="font-semibold">
-                      {b.check_out || "N/A"}
-                    </span>
-                  </p>
-
-                  <p className="text-sm text-gray-700">
-                    📌 Status:{" "}
-                    <span
-                      className={`font-bold ${
-                        b.status === "active"
-                          ? "text-green-600"
-                          : "text-blue-600"
-                      }`}
-                    >
-                      {b.status.toUpperCase()}
-                    </span>
-                  </p>
-
-                  {/* FINISHED ROOMS ONLY */}
-                  {b.status === "finished" && (
-                    <div className="mt-4 border-t pt-3">
-                      <p className="font-semibold mb-2">
-                        Stayed Rooms:
+                      <p className="text-sm text-gray-700">
+                        Created: {timeAgo(b.created_at)}
                       </p>
-
-                      <div className="space-y-2">
-                        {getRoomsByHotel(b.hotel_name).length ===
-                        0 ? (
-                          <p className="text-sm text-gray-500">
-                            No room data available
-                          </p>
-                        ) : (
-                          getRoomsByHotel(b.hotel_name).map(
-                            (room, index) => (
-                              <div
-                                key={index}
-                                className="p-2 bg-white border rounded"
-                              >
-                                <p className="font-medium">
-                                  {room.name}
-                                </p>
-                                <p className="text-gray-600 text-sm">
-                                  {room.desc}
-                                </p>
-                              </div>
-                            )
-                          )
-                        )}
-                      </div>
                     </div>
-                  )}
 
+                    <p className={`font-bold ${statusColor(b.status)}`}>
+                      {b.status.toUpperCase()}
+                    </p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          )
+        ) : (
+          /* FINISHED */
+          finishedBookings.length === 0 ? (
+            <p className="text-gray-600">No finished bookings.</p>
+          ) : (
+            <div className="space-y-4">
+              {finishedBookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="border rounded-xl p-5 bg-gray-50 shadow-sm"
+                >
+                  <div className="flex justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold">
+                        {b.hotel_name}
+                      </h2>
 
-              </div>
-            ))}
+                      <p className="text-sm text-gray-700">
+                        Created: {timeAgo(b.created_at)}
+                      </p>
+                    </div>
 
-          </div>
+                    <p className={`font-bold ${statusColor(b.status)}`}>
+                      {b.status.toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         )}
 
       </div>
-
     </div>
   );
 }

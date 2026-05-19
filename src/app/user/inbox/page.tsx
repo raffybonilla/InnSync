@@ -22,6 +22,7 @@ export default function InboxPage() {
   const [showNewChat, setShowNewChat] = useState(false);
 
   const [messageInput, setMessageInput] = useState("");
+
   const [newHotel, setNewHotel] = useState("");
   const [newMessage, setNewMessage] = useState("");
 
@@ -151,162 +152,136 @@ export default function InboxPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 text-black">
-      <div className="flex flex-1">
-        {/* ================= SIDEBAR ================= */}
-        <div className="w-64 bg-[#3a4659] text-white p-4 flex flex-col">
-          <h1 className="text-2xl font-bold mb-8">Inn Sync</h1>
+    <div className="min-h-screen bg-gray-100 flex text-black">
 
-          <button
-            onClick={() => router.push("/user/profile")}
-            className="text-left py-3 px-2 rounded hover:bg-white/10 transition"
-          >
-            👤 Profile
-          </button>
+      {/* ================= LEFT PANEL ================= */}
+      <div className="w-1/3 bg-white border-r p-4">
+
+        {/* HEADER */}
+        <div className="flex items-center gap-2 mb-4">
 
           <button
             onClick={() => router.push("/user/dashboard")}
-            className="text-left py-3 px-2 rounded hover:bg-white/10 transition"
+            className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 font-semibold"
           >
-            Dashboard
+            ← Back
           </button>
 
-          <button
-            onClick={() => router.push("/user/inbox")}
-            className="text-left py-3 px-2 rounded bg-white/20 font-bold"
-          >
+          <h1 className="text-xl font-bold text-black">
             Inbox
-          </button>
+          </h1>
 
           <button
-            onClick={() => router.push("/user/wallet")}
-            className="text-left py-3 px-2 rounded hover:bg-white/10 transition"
+            onClick={() => setShowNewChat(true)}
+            className="ml-auto bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 font-semibold"
           >
-            My Wallet
+            + New Chat
           </button>
 
-          <button
-            onClick={() => router.push("/user/notifications")}
-            className="text-left py-3 px-2 rounded hover:bg-white/10 transition"
-          >
-            Notifications
-          </button>
-
-          <button className="mt-auto text-left py-3 px-2 rounded hover:bg-red-500/20 text-red-300 transition">
-            Logout
-          </button>
         </div>
 
-        {/* ================= LEFT PANEL ================= */}
-        <div className="w-[350px] bg-white border-r p-4 flex flex-col">
-          <div className="flex items-center gap-2 mb-5">
+        {/* CHAT LIST */}
+        <div className="flex flex-col">
+
+          {chats.map((chat) => (
             <button
-              onClick={() => router.push("/user/dashboard")}
-              className="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300 font-semibold"
+              key={chat.id}
+              onClick={() => setSelectedChat(chat.id)}
+              className={`text-left p-3 border-b hover:bg-gray-100 w-full transition ${
+                selectedChat === chat.id ? "bg-gray-200" : ""
+              }`}
             >
-              ← Back
-            </button>
-
-            <h1 className="text-2xl font-bold">Inbox</h1>
-
-            <button
-              onClick={() => setShowNewChat(true)}
-              className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold"
-            >
-              + New Chat
-            </button>
-          </div>
-
-          <div className="flex flex-col overflow-y-auto">
-            {chats.map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => setSelectedChat(chat.id)}
-                className={`text-left p-4 border-b transition ${
-                  selectedChat === chat.id
-                    ? "bg-gray-200 border-l-4 border-blue-600"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                <p className="font-bold text-black">{chat.name}</p>
-
-                <p className="text-xs text-gray-700 mt-1">
-                  Handled by {chat.handler}
-                </p>
-
-                <p className="text-sm text-gray-600 mt-2 truncate">
-                  {chat.messages[chat.messages.length - 1]?.text}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ================= RIGHT PANEL ================= */}
-        <div className="flex-1 p-6">
-          {!activeChat ? (
-            <div className="bg-white rounded shadow p-6">
-              <p className="text-gray-600 font-semibold">
-                Select a conversation
+              <p className="font-bold text-black text-base">
+                {chat.name}
               </p>
-            </div>
-          ) : (
-            <div className="bg-white p-5 rounded shadow h-full flex flex-col">
-              <div className="border-b pb-4 mb-4">
-                <h2 className="text-2xl font-bold text-black">
-                  {activeChat.name}
-                </h2>
 
-                <p className="text-sm text-gray-600 mt-1">
-                  Handled by: {activeChat.handler}
-                </p>
-              </div>
+              <p className="text-xs text-gray-800 font-medium">
+                Handled by {chat.handler}
+              </p>
 
-              <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                {activeChat.messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`p-3 rounded-lg max-w-[75%] border ${
-                      msg.sender === "user"
-                        ? "ml-auto bg-black text-white"
-                        : "bg-[#90a1b9] text-black"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                ))}
-              </div>
+              <p className="text-sm text-gray-700 mt-1 truncate font-medium">
+                {chat.messages[chat.messages.length - 1]?.text}
+              </p>
 
-              <div className="mt-5 flex gap-2">
-                <input
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder="Type a message..."
-                  className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+            </button>
+          ))}
 
-                <button
-                  onClick={sendMessage}
-                  className="bg-black text-white px-5 py-3 rounded hover:bg-gray-800"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          )}
         </div>
+
       </div>
 
-      {/* ================= FOOTER ================= */}
-      <footer className="bg-[#3a4659] text-white text-center py-3 text-sm">
-        © 2026 Inn Sync — Hotel Booking System
-      </footer>
+      {/* ================= RIGHT PANEL ================= */}
+      <div className="flex-1 p-6">
+
+        {!activeChat ? (
+          <p className="text-gray-600 font-semibold">
+            Select a conversation
+          </p>
+        ) : (
+          <div className="bg-white p-5 rounded shadow h-full flex flex-col text-black">
+
+            {/* CHAT HEADER */}
+            <div className="border-b pb-3 mb-4">
+
+              <h2 className="text-lg font-bold text-black">
+                {activeChat.name}
+              </h2>
+
+              <p className="text-sm text-gray-700 font-medium">
+                Handled by: {activeChat.handler}
+              </p>
+
+            </div>
+
+            {/* MESSAGES */}
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+
+              {activeChat.messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`p-3 rounded max-w-[75%] border text-base font-medium ${
+                    msg.sender === "user"
+                      ? "bg-white text-black ml-auto border-gray-300"
+                      : "bg-[#90a1b9] text-black border-[#7d8aa1]"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              ))}
+
+            </div>
+
+            {/* INPUT */}
+            <div className="mt-4 flex gap-2 items-center">
+
+              <input
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                placeholder="Type a message..."
+                className="w-full border-2 border-gray-400 p-3 rounded-lg focus:outline-none focus:border-black bg-white text-black placeholder-gray-600 font-medium"
+              />
+
+              <button
+                onClick={sendMessage}
+                className="bg-black text-white px-5 py-3 rounded-lg hover:bg-gray-800 font-semibold"
+              >
+                Send
+              </button>
+
+            </div>
+
+          </div>
+        )}
+
+      </div>
 
       {/* ================= NEW CHAT MODAL ================= */}
       {showNewChat && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[90%] max-w-md p-6 rounded-xl shadow-lg">
-            <h2 className="text-xl font-bold mb-4 text-black">
+
+          <div className="bg-white w-[90%] max-w-md p-6 rounded shadow-lg text-black">
+
+            <h2 className="text-lg font-bold mb-3">
               Start New Chat
             </h2>
 
@@ -314,34 +289,39 @@ export default function InboxPage() {
               value={newHotel}
               onChange={(e) => setNewHotel(e.target.value)}
               placeholder="Hotel name..."
-              className="w-full border border-gray-300 p-3 rounded mb-3"
+              className="w-full border p-2 rounded mb-3 text-black font-medium"
             />
 
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Message..."
-              className="w-full border border-gray-300 p-3 rounded mb-4 h-28 resize-none"
+              className="w-full border p-2 rounded mb-3 text-black font-medium"
             />
 
             <div className="flex gap-2">
+
               <button
                 onClick={() => setShowNewChat(false)}
-                className="flex-1 bg-gray-200 py-3 rounded hover:bg-gray-300 font-semibold"
+                className="flex-1 bg-gray-200 py-2 rounded hover:bg-gray-300 font-semibold"
               >
                 Cancel
               </button>
 
               <button
                 onClick={createNewChat}
-                className="flex-1 bg-blue-600 text-white py-3 rounded hover:bg-blue-700 font-semibold"
+                className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-semibold"
               >
                 Send
               </button>
+
             </div>
+
           </div>
+
         </div>
       )}
+
     </div>
   );
 }
