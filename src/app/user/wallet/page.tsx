@@ -57,27 +57,9 @@ export default function WalletPage() {
     setTransactions((prev) => [{ id: prev.length + 1, ...tx }, ...prev]);
   };
 
-  /* ================= FIXED WALLET LOGIC (SAFE DEDUCTION LIKE PAYMENT PAGE) ================= */
+  /* ================= SAFE WALLET DISCOUNT ================= */
   const applyWalletDiscount = (amount: number) => {
-    const discount = Math.min(totalWallet, amount);
-
-    let remaining = discount;
-
-    let newBalance = balance;
-    let newCashback = cashback;
-
-    if (newBalance >= remaining) {
-      newBalance -= remaining;
-    } else {
-      remaining -= newBalance;
-      newBalance = 0;
-      newCashback -= remaining;
-    }
-
-    setBalance(newBalance);
-    setCashback(newCashback);
-
-    return discount;
+    return Math.min(totalWallet, amount);
   };
 
   const goBack = () => {
@@ -97,35 +79,55 @@ export default function WalletPage() {
         <div>
           <div className="flex flex-col items-center mb-10">
             <img
-              src="/profile.jpg"
+              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
+              alt="Profile"
               className="w-20 h-20 rounded-full border-2 border-white object-cover"
             />
+
             <h2 className="mt-3 text-lg font-semibold">User Name</h2>
           </div>
 
           <div className="space-y-2">
 
-            <button onClick={() => router.push("/user/profile")} className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]">
+            <button
+              onClick={() => router.push("/user/profile")}
+              className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]"
+            >
               Profile
             </button>
 
-            <button onClick={() => router.push("/user/dashboard")} className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]">
+            <button
+              onClick={() => router.push("/user/dashboard")}
+              className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]"
+            >
               Dashboard
             </button>
 
-            <button onClick={() => router.push("/user/inbox")} className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]">
+            <button
+              onClick={() => router.push("/user/inbox")}
+              className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]"
+            >
               Inbox
             </button>
 
-            <button onClick={() => setView("menu")} className="w-full text-left px-4 py-3 rounded-xl bg-[#2b3448]">
+            <button
+              onClick={() => setView("menu")}
+              className="w-full text-left px-4 py-3 rounded-xl bg-[#2b3448]"
+            >
               My Wallet
             </button>
 
-            <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]">
+            <button
+              onClick={() => router.push("/user/notifications")}
+              className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]"
+            >
               Notifications
             </button>
 
-            <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]">
+            <button
+              onClick={() => router.push("/user/settings")}
+              className="w-full text-left px-4 py-3 rounded-xl hover:bg-[#2b3448]"
+            >
               Settings
             </button>
 
@@ -148,8 +150,13 @@ export default function WalletPage() {
 
         {/* HEADER */}
         <header className="bg-white px-10 py-6 border-b flex items-center gap-4">
-          <button onClick={goBack} className="text-2xl font-bold">←</button>
-          <h1 className="text-3xl font-semibold">My Wallet</h1>
+          <button onClick={goBack} className="text-2xl font-bold">
+            ←
+          </button>
+
+          <h1 className="text-3xl font-semibold">
+            My Wallet
+          </h1>
         </header>
 
         <main className="flex-1 p-10">
@@ -158,15 +165,24 @@ export default function WalletPage() {
           {view === "menu" && (
             <div className="space-y-4 max-w-xl">
 
-              <button onClick={() => setView("balance")} className="w-full p-5 bg-white rounded-2xl shadow-sm text-left">
+              <button
+                onClick={() => setView("balance")}
+                className="w-full p-5 bg-white rounded-2xl shadow-sm text-left"
+              >
                 Wallet Balance
               </button>
 
-              <button onClick={() => setView("payment")} className="w-full p-5 bg-white rounded-2xl shadow-sm text-left">
-                Payment (Preview)
+              <button
+                onClick={() => setView("payment")}
+                className="w-full p-5 bg-white rounded-2xl shadow-sm text-left"
+              >
+                Payment 
               </button>
 
-              <button onClick={() => setView("transactions")} className="w-full p-5 bg-white rounded-2xl shadow-sm text-left">
+              <button
+                onClick={() => setView("transactions")}
+                className="w-full p-5 bg-white rounded-2xl shadow-sm text-left"
+              >
                 Transaction History
               </button>
 
@@ -176,10 +192,23 @@ export default function WalletPage() {
           {/* BALANCE */}
           {view === "balance" && (
             <div className="p-8 bg-blue-200 rounded-2xl max-w-xl">
-              <h2 className="text-2xl font-bold mb-4">Wallet Balance</h2>
-              <p className="text-4xl font-bold">₱{totalWallet.toLocaleString()}</p>
-              <p className="mt-4">Balance: ₱{balance.toLocaleString()}</p>
-              <p>Cashback: ₱{cashback.toLocaleString()}</p>
+
+              <h2 className="text-2xl font-bold mb-4">
+                Wallet Balance
+              </h2>
+
+              <p className="text-4xl font-bold">
+                ₱{totalWallet.toLocaleString()}
+              </p>
+
+              <p className="mt-4">
+                Balance: ₱{balance.toLocaleString()}
+              </p>
+
+              <p>
+                Cashback: ₱{cashback.toLocaleString()}
+              </p>
+
             </div>
           )}
 
@@ -187,6 +216,10 @@ export default function WalletPage() {
           {view === "payment" && (
             <PaymentMini
               totalWallet={totalWallet}
+              balance={balance}
+              cashback={cashback}
+              setBalance={setBalance}
+              setCashback={setCashback}
               applyWalletDiscount={applyWalletDiscount}
               addTransaction={addTransaction}
               getToday={getToday}
@@ -196,18 +229,37 @@ export default function WalletPage() {
           {/* TRANSACTIONS */}
           {view === "transactions" && (
             <div className="bg-white p-6 rounded-2xl">
-              <h2 className="text-xl font-bold mb-4">Transactions</h2>
+
+              <h2 className="text-xl font-bold mb-4">
+                Transactions
+              </h2>
 
               {transactions.map((tx) => (
-                <div key={tx.id} className="flex justify-between border-b py-3">
+                <div
+                  key={tx.id}
+                  className="flex justify-between border-b py-3"
+                >
                   <div>
                     <p className="font-medium">{tx.title}</p>
-                    <p className="text-sm text-gray-500">{tx.date}</p>
-                    <p className="text-xs">{tx.paymentMethod}</p>
+
+                    <p className="text-sm text-gray-500">
+                      {tx.date}
+                    </p>
+
+                    <p className="text-xs">
+                      {tx.paymentMethod}
+                    </p>
                   </div>
 
-                  <p className={tx.type === "credit" ? "text-green-600" : "text-red-600"}>
-                    {tx.amount < 0 ? "-" : "+"}₱{Math.abs(tx.amount).toLocaleString()}
+                  <p
+                    className={
+                      tx.type === "credit"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
+                    {tx.amount < 0 ? "-" : "+"}₱
+                    {Math.abs(tx.amount).toLocaleString()}
                   </p>
                 </div>
               ))}
@@ -215,19 +267,30 @@ export default function WalletPage() {
           )}
 
         </main>
+
+        {/* FOOTER */}
+        <footer className="bg-[#1d2433] text-white px-10 py-5 text-sm">
+          © 2026 Inn Sync. All rights reserved.
+        </footer>
+
       </div>
     </div>
   );
 }
 
-/* ================= PAYMENT MINI (MATCHED TO PAYMENT PAGE STYLE) ================= */
+/* ================= PAYMENT MINI ================= */
 
 function PaymentMini({
   totalWallet,
+  balance,
+  cashback,
+  setBalance,
+  setCashback,
   applyWalletDiscount,
   addTransaction,
   getToday,
 }: any) {
+
   const room = {
     name: "Deluxe Room",
     image:
@@ -242,33 +305,79 @@ function PaymentMini({
   const [guests, setGuests] = useState(2);
 
   const [useWallet, setUseWallet] = useState(false);
+
   const [method, setMethod] = useState("");
   const [account, setAccount] = useState("");
+
   const [success, setSuccess] = useState(false);
 
   const nights = useMemo(() => {
     const diff =
-      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+      (new Date(checkOut).getTime() -
+        new Date(checkIn).getTime()) /
       (1000 * 60 * 60 * 24);
+
     return diff > 0 ? diff : 1;
   }, [checkIn, checkOut]);
 
   const base = room.pricePerNight * nights;
-  const extra = guests > room.maxGuests ? (guests - room.maxGuests) * 500 : 0;
+
+  const extra =
+    guests > room.maxGuests
+      ? (guests - room.maxGuests) * 500
+      : 0;
+
   const total = base + extra;
 
-  const walletDiscount = useWallet ? applyWalletDiscount(total) : 0;
+  const walletDiscount = useWallet
+    ? applyWalletDiscount(total)
+    : 0;
+
   const remaining = total - walletDiscount;
 
   const handlePay = () => {
-    if (!method) return alert("Select payment method");
-    if (method !== "card" && account.length !== 11)
+
+    if (!method) {
+      return alert("Select payment method");
+    }
+
+    if (method !== "card" && account.length !== 11) {
       return alert("Invalid number");
+    }
+
+    let discount = 0;
+
+    if (useWallet) {
+
+      discount = Math.min(totalWallet, total);
+
+      let remainingWallet = discount;
+
+      let newBalance = balance;
+      let newCashback = cashback;
+
+      if (newBalance >= remainingWallet) {
+
+        newBalance -= remainingWallet;
+
+      } else {
+
+        remainingWallet -= newBalance;
+        newBalance = 0;
+        newCashback -= remainingWallet;
+
+      }
+
+      setBalance(newBalance);
+      setCashback(newCashback);
+    }
+
+    const finalAmount = total - discount;
 
     addTransaction({
       title: room.name,
       date: getToday(),
-      amount: -remaining,
+      amount: -finalAmount,
       type: "debit",
       paymentMethod: method,
     });
@@ -280,17 +389,43 @@ function PaymentMini({
     <div className="bg-white p-6 rounded-2xl space-y-4 max-w-2xl">
 
       <div className="flex gap-4">
-        <img src={room.image} className="w-40 h-28 rounded-xl object-cover" />
+
+        <img
+          src={room.image}
+          className="w-40 h-28 rounded-xl object-cover"
+        />
+
         <div>
-          <h2 className="font-bold">{room.name}</h2>
-          <p className="text-gray-500">{room.location}</p>
-          <p>₱{room.pricePerNight} per night</p>
+          <h2 className="font-bold">
+            {room.name}
+          </h2>
+
+          <p className="text-gray-500">
+            {room.location}
+          </p>
+
+          <p>
+            ₱{room.pricePerNight} per night
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="border p-2 rounded" />
-        <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="border p-2 rounded" />
+
+        <input
+          type="date"
+          value={checkIn}
+          onChange={(e) => setCheckIn(e.target.value)}
+          className="border p-2 rounded"
+        />
+
+        <input
+          type="date"
+          value={checkOut}
+          onChange={(e) => setCheckOut(e.target.value)}
+          className="border p-2 rounded"
+        />
+
       </div>
 
       <input
@@ -301,65 +436,95 @@ function PaymentMini({
       />
 
       <label className="flex gap-2 items-center">
-        <input type="checkbox" checked={useWallet} onChange={() => setUseWallet(!useWallet)} />
+
+        <input
+          type="checkbox"
+          checked={useWallet}
+          onChange={() => setUseWallet(!useWallet)}
+        />
+
         Use Wallet (₱{totalWallet.toLocaleString()})
+
       </label>
 
       {useWallet && (
         <p className="text-sm text-gray-500">
-          Wallet Discount: ₱{walletDiscount.toLocaleString()}
+          Wallet Discount: ₱
+          {walletDiscount.toLocaleString()}
         </p>
       )}
 
-      <p className="font-bold">Remaining: ₱{remaining.toLocaleString()}</p>
+      <p className="font-bold">
+        Remaining: ₱{remaining.toLocaleString()}
+      </p>
 
       <div className="flex gap-2 flex-wrap">
+
         {["gcash", "maya", "paypal", "card"].map((m) => (
           <button
             key={m}
             onClick={() => setMethod(m)}
             className={`border px-3 py-2 rounded ${
-              method === m ? "bg-black text-white" : ""
+              method === m
+                ? "bg-black text-white"
+                : ""
             }`}
           >
             {m.toUpperCase()}
           </button>
         ))}
+
       </div>
 
       {method && (
         <input
-          placeholder={method === "card" ? "Card Number" : "09XXXXXXXXX"}
+          placeholder={
+            method === "card"
+              ? "Card Number"
+              : "09XXXXXXXXX"
+          }
           value={account}
           onChange={(e) => setAccount(e.target.value)}
           className="border p-2 w-full rounded"
         />
       )}
 
-      <button onClick={handlePay} className="w-full bg-green-600 text-white p-3 rounded">
+      <button
+        onClick={handlePay}
+        className="w-full bg-green-600 text-white p-3 rounded"
+      >
         Pay Now
       </button>
 
-      {/* SAFE UI MODAL (NO localhost / NO routing) */}
+      {/* SUCCESS MODAL */}
       {success && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl text-center">
-            <h2 className="text-green-600 font-bold text-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+          <div className="bg-white p-6 rounded-xl text-center w-[350px]">
+
+            <h2 className="text-green-600 font-bold text-2xl">
               Payment Successful 🎉
             </h2>
 
-            <p>{room.name}</p>
-            <p>Total Paid: ₱{remaining.toLocaleString()}</p>
+            <p className="mt-3">
+              {room.name}
+            </p>
+
+            <p className="mt-1">
+              Total Paid: ₱{remaining.toLocaleString()}
+            </p>
 
             <button
               onClick={() => setSuccess(false)}
-              className="mt-4 bg-black text-white px-4 py-2 rounded"
+              className="mt-5 bg-black text-white px-4 py-2 rounded-lg"
             >
               Close
             </button>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
