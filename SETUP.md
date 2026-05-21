@@ -7,18 +7,12 @@
 npm install
 ```
 
-2. **Create your local environment file:**
-```bash
-cp .env.example .env.local
-```
-Then replace the placeholders with your Supabase project values.
-
-3. **Run the development server:**
+2. **Run the development server:**
 ```bash
 npm run dev
 ```
 
-4. **Access the application:**
+3. **Access the application:**
    - Home: http://localhost:3000
    - User Login/Register: http://localhost:3000/auth/user
    - User Dashboard: http://localhost:3000/user/dashboard
