@@ -304,7 +304,7 @@ export default function DashboardPage() {
           </div>
 
           <h1 className="text-3xl font-bold mb-6">
-            👋 Welcome, {userName || "User"}
+            Welcome, {userName || "User"}
           </h1>
 
           {/* ===================== CEBU HOTELS ===================== */}
