@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const Chatbot = dynamic(() => import("@/components/Chatbot"), { ssr: false });
 
 export default function InboxPage() {
   const router = useRouter();
@@ -94,46 +97,45 @@ export default function InboxPage() {
       <div className="flex-1 p-6">
 
         {!activeChat ? (
-          <p className="text-gray-500">
-            Select a conversation
-          </p>
+          <p className="text-gray-500">Select a conversation</p>
         ) : (
-          <div className="bg-white p-5 rounded shadow">
+          <div className="bg-white p-5 rounded shadow h-[70vh] flex gap-4">
 
-            {/* CHAT HEADER */}
-            <h2 className="text-lg font-bold mb-1">
-              {activeChat.name}
-            </h2>
+            {/* MAIN CHAT (left) */}
+            <div className="w-2/3 flex flex-col">
+              <div>
+                <h2 className="text-lg font-bold mb-1">{activeChat.name}</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Handled by: {activeChat.handler}
+                </p>
+              </div>
 
-            <p className="text-sm text-gray-500 mb-4">
-              Handled by: {activeChat.handler}
-            </p>
+              <div className="flex-1 overflow-auto space-y-3">
+                {activeChat.messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded w-fit max-w-[80%] ${
+                      msg.sender === "user" ? "bg-blue-100 ml-auto" : "bg-gray-100"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                ))}
+              </div>
 
-            {/* MESSAGES */}
-            <div className="space-y-3">
-              {activeChat.messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded w-fit ${
-                    msg.sender === "user"
-                      ? "bg-blue-100 ml-auto"
-                      : "bg-gray-100"
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              ))}
+              <div className="mt-4 flex gap-2">
+                <input placeholder="Type a message..." className="w-full border p-2 rounded" />
+                <button className="bg-black text-white px-4 rounded">Send</button>
+              </div>
             </div>
 
-            {/* INPUT */}
-            <div className="mt-4 flex gap-2">
-              <input
-                placeholder="Type a message..."
-                className="w-full border p-2 rounded"
-              />
-              <button className="bg-black text-white px-4 rounded">
-                Send
-              </button>
+            {/* ASSISTANT (right) */}
+            <div className="w-1/3 border-l pl-4">
+              <h3 className="font-semibold mb-2">Assistant</h3>
+              <div className="h-full">
+                {/* @ts-ignore - dynamic client component */}
+                <Chatbot />
+              </div>
             </div>
 
           </div>
