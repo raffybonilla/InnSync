@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // ✅ FIX: allow LAN access (removes cross-origin warning)
+  allowedDevOrigins: ["192.168.8.42"],
 };
 
 export default nextConfig;
