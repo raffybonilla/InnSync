@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
+import CreateStaffModal from '@/components/CreateStaffModal';
 
 interface UserSession {
   id: string;
@@ -49,6 +50,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
 
   useEffect(() => {
     const userJson = localStorage.getItem('user');
@@ -138,6 +140,28 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout activePage="dashboard" user={user}>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-slate-500 mt-1">Welcome to your admin panel</p>
+        </div>
+        <button
+          onClick={() => setIsStaffModalOpen(true)}
+          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center gap-2"
+        >
+          <span>➕</span>
+          Create Staff Account
+        </button>
+      </div>
+
+      <CreateStaffModal
+        isOpen={isStaffModalOpen}
+        onClose={() => setIsStaffModalOpen(false)}
+        onStaffCreated={() => {
+          fetchDashboardData();
+        }}
+      />
+
       <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between">
