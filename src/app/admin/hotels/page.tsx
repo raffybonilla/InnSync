@@ -64,29 +64,21 @@ export default function HotelManagement() {
     }
   };
 
-  const handleAddHotel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('/api/hotels', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        setFormData({
-          name: '',
-          location: '',
-          rating: 0,
-          rooms: 0,
-          available: 0,
-          revenue: '$0',
+  const handleDeleteHotel = async (hotelId: string) => {
+    if (window.confirm('Are you sure you want to delete this hotel?')) {
+      try {
+        const response = await fetch(`/api/hotels?id=${hotelId}`, {
+          method: 'DELETE',
         });
-        setShowForm(false);
-        fetchHotels();
+
+        if (response.ok) {
+          fetchHotels();
+        } else {
+          alert('Failed to delete hotel');
+        }
+      } catch (error) {
+        console.error('Error deleting hotel:', error);
       }
-    } catch (error) {
-      console.error('Error adding hotel:', error);
     }
   };
 
@@ -137,12 +129,20 @@ export default function HotelManagement() {
             <h1 className="text-3xl font-bold">Hotel & Room Management</h1>
             <p className="text-slate-500 mt-2">Manage hotels and room inventory</p>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            + Add Hotel
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push('/admin/rooms')}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+            >
+              📋 Manage Rooms
+            </button>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+            >
+              + Add Hotel
+            </button>
+          </div>
         </div>
 
         {/* Add Hotel Form */}
@@ -277,7 +277,12 @@ export default function HotelManagement() {
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">{hotel.revenue}</td>
                       <td className="px-6 py-4 text-sm">
-                        <button className="text-slate-600 hover:text-slate-900">⋯</button>
+                        <button className="text-slate-600 hover:text-slate-900 px-2">✎</button>
+                        <button 
+                          onClick={() => handleDeleteHotel(hotel.id)}
+                          className="text-red-600 hover:text-red-900 px-2">
+                          ✕
+                        </button>
                       </td>
                     </tr>
                   ))}

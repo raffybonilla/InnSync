@@ -25,18 +25,77 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, status } = body;
+    const { room_number, room_type, capacity, price_per_night, hotel_id, status, amenities, description } = body;
 
-    if (!id || !status) {
-      return NextResponse.json({ error: 'Room ID and status are required' }, { status: 400 });
+    if (!room_number || !room_type || !capacity || !price_per_night) {
+      return NextResponse.json(
+        { error: 'Missing required fields: room_number, room_type, capacity, price_per_night' },
+        { status: 400 }
+      );
     }
 
     const { data: room, error } = await supabase
       .from('rooms')
-      .update({ status })
+      .insert([
+        {
+          room_number,
+          room_type,
+          capacity,
+          price_per_night,
+          hotel_id: hotel_id || null,
+          status: status || 'available',
+          amenities: amenities || [],
+          description: description || '',
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating room:', error);
+      return NextResponse.json(
+        { error: 'Failed to create room' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Room created successfully',
+      room,
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, status, room_type, capacity, price_per_night, amenities, description } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Room ID is required' }, { status: 400 });
+    }
+
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (room_type) updateData.room_type = room_type;
+    if (capacity !== undefined) updateData.capacity = capacity;
+    if (price_per_night !== undefined) updateData.price_per_night = price_per_night;
+    if (amenities !== undefined) updateData.amenities = amenities;
+    if (description !== undefined) updateData.description = description;
+
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -46,9 +105,51 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update room' }, { status: 500 });
     }
 
-    return NextResponse.json({ room });
+    return NextResponse.json({
+      success: true,
+      message: 'Room updated successfully',
+      room,
+    });
   } catch (error) {
     console.error('Unexpected error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Room ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabase
+      .from('rooms')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting room:', error);
+      return NextResponse.json(
+        { error: 'Failed to delete room' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Room deleted successfully',
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

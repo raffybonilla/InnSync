@@ -85,6 +85,24 @@ export default function PromotionsManagement() {
     }
   };
 
+  const handleDeletePromotion = async (promotionId: string) => {
+    if (window.confirm('Are you sure you want to delete this promotion?')) {
+      try {
+        const response = await fetch(`/api/promotions?id=${promotionId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          fetchPromotions();
+        } else {
+          alert('Failed to delete promotion');
+        }
+      } catch (error) {
+        console.error('Error deleting promotion:', error);
+      }
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -254,7 +272,12 @@ export default function PromotionsManagement() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <button className="text-slate-600 hover:text-slate-900">⋯</button>
+                        <button className="text-slate-600 hover:text-slate-900 px-2">✎</button>
+                        <button 
+                          onClick={() => handleDeletePromotion(promo.id)}
+                          className="text-red-600 hover:text-red-900 px-2">
+                          ✕
+                        </button>
                       </td>
                     </tr>
                   ))}
