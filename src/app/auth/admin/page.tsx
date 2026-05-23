@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
+import { isSupabaseConfigured, supabase, SUPABASE_SETUP_MESSAGE } from '@/lib/supabaseClient';
 
 const allowedRoles = ['admin', 'manager'];
 
@@ -50,7 +50,7 @@ export default function AdminLogin() {
 
       router.push('/admin/dashboard');
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -70,6 +70,11 @@ export default function AdminLogin() {
         </div>
 
         <div className="p-8">
+          {!isSupabaseConfigured() && (
+            <div className="mb-5 rounded-2xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+              {SUPABASE_SETUP_MESSAGE}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>

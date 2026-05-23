@@ -64,6 +64,41 @@ export default function HotelManagement() {
     }
   };
 
+  const handleAddHotel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/hotels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          rating: Number(formData.rating) || 0,
+          rooms: Number(formData.rooms) || 0,
+          available: Number(formData.available) || 0,
+        }),
+      });
+
+      if (response.ok) {
+        setFormData({
+          name: '',
+          location: '',
+          rating: 0,
+          rooms: 0,
+          available: 0,
+          revenue: '$0',
+        });
+        setShowForm(false);
+        fetchHotels();
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || 'Failed to add hotel');
+      }
+    } catch (error) {
+      console.error('Error adding hotel:', error);
+      alert('Error adding hotel');
+    }
+  };
+
   const handleDeleteHotel = async (hotelId: string) => {
     if (window.confirm('Are you sure you want to delete this hotel?')) {
       try {

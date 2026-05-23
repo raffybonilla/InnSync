@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { logoutUser } from "@/lib/userLogout";
 
 /* ================= SIDEBAR ================= */
 function Sidebar({ fullName }: any) {
@@ -82,10 +83,7 @@ function Sidebar({ fullName }: any) {
           </div>
 
           <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push("/login");
-            }}
+            onClick={() => logoutUser(router)}
             className="text-red-280 hover:text-red-180"
           >
             Logout

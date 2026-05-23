@@ -7,20 +7,7 @@ interface AmenitiesProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const AMENITIES_MAP: Record<string, { label: string; icon: string; description: string }> = {
-  wifi: { label: 'Free Wi-Fi', icon: '📶', description: 'High-speed internet' },
-  pool: { label: 'Pool Access', icon: '🏊', description: 'Swimming pool' },
-  breakfast: { label: 'Breakfast', icon: '🍳', description: 'Free breakfast included' },
-  tv: { label: 'Smart TV', icon: '📺', description: 'Entertainment system' },
-  aircon: { label: 'Air Conditioning', icon: '❄️', description: 'Climate control' },
-  mini_fridge: { label: 'Mini Bar/Fridge', icon: '🧊', description: 'In-room refrigerator' },
-  hairdryer: { label: 'Hair Dryer', icon: '💇', description: 'Professional hair dryer' },
-  dining: { label: 'Dining Area', icon: '🍽️', description: 'Dining room' },
-  bathrobe: { label: 'Bathrobe & Slippers', icon: '🧥', description: 'Luxury amenities' },
-  workspace: { label: 'Work Desk', icon: '💼', description: 'Business center' },
-  safe: { label: 'In-room Safe', icon: '🔐', description: 'Security deposit box' },
-  view: { label: 'City/Ocean View', icon: '🌆', description: 'Scenic view' },
-};
+import { AMENITIES_MAP } from '@/lib/amenities';
 
 export default function Amenities({
   amenities = [],

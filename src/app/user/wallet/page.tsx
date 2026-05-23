@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logoutUser } from "@/lib/userLogout";
 
 type View = "menu" | "balance" | "payment" | "transactions";
 
@@ -139,7 +140,10 @@ export default function WalletPage() {
             Help & Support
           </button>
 
-          <button className="w-full text-left px-4 py-3 rounded-xl text-red-300 hover:bg-[#2b3448]">
+          <button
+            onClick={() => logoutUser(router)}
+            className="w-full text-left px-4 py-3 rounded-xl text-red-300 hover:bg-[#2b3448]"
+          >
             Log out
           </button>
         </div>

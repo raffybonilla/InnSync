@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { logoutUser } from "@/lib/userLogout";
 
 /* ===================== LOGOUT MODAL ===================== */
 function LogoutModal({
@@ -81,10 +82,7 @@ export default function SettingsPage() {
       {showLogout && (
         <LogoutModal
           onCancel={() => setShowLogout(false)}
-          onConfirm={async () => {
-            await supabase.auth.signOut();
-            router.push("/login");
-          }}
+          onConfirm={() => logoutUser(router)}
         />
       )}
 

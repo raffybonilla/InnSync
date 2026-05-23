@@ -8,6 +8,24 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (id) {
+      const { data: room, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching room:', error);
+        return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({ room });
+    }
+
     const { data: rooms, error } = await supabase
       .from('rooms')
       .select('*')
@@ -28,9 +46,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { room_number, room_type, capacity, price_per_night, hotel_id, status, amenities, description } = body;
+    const { room_number, room_type, capacity, price_per_night, status, amenities, description } = body;
 
-    if (!room_number || !room_type || !capacity || !price_per_night) {
+    if (!room_number || !room_type || capacity == null || price_per_night == null) {
       return NextResponse.json(
         { error: 'Missing required fields: room_number, room_type, capacity, price_per_night' },
         { status: 400 }
@@ -41,11 +59,10 @@ export async function POST(request: NextRequest) {
       .from('rooms')
       .insert([
         {
-          room_number,
+          room_number: String(room_number),
           room_type,
-          capacity,
-          price_per_night,
-          hotel_id: hotel_id || null,
+          capacity: Number(capacity),
+          price_per_night: Number(price_per_night),
           status: status || 'available',
           amenities: amenities || [],
           description: description || '',
@@ -57,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error creating room:', error);
       return NextResponse.json(
-        { error: 'Failed to create room' },
+        { error: error.message || 'Failed to create room' },
         { status: 500 }
       );
     }

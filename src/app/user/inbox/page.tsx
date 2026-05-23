@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { logoutUser } from "@/lib/userLogout";
 
 type Message = {
   sender: "hotel" | "user";
@@ -220,6 +221,7 @@ export default function InboxPage() {
           </div>
 
           <button
+            onClick={() => logoutUser(router)}
             className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-semibold transition"
           >
             Logout

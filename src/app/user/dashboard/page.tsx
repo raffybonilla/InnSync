@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { logoutUser } from "@/lib/userLogout";
+import {
+  buildDashboardListings,
+  type DashboardListing,
+} from "@/lib/dashboardListings";
 
 /* ===================== LOGOUT MODAL ===================== */
 function LogoutModal({
@@ -81,40 +86,6 @@ function TermsModal({ onAccept }: { onAccept: () => void }) {
   );
 }
 
-/* ===================== HOTEL DATA ===================== */
-const cebuHotels = [
-  {
-    id: 1,
-    name: "Radisson Blu Cebu",
-    image:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop",
-    rating: 4.8,
-    details: "Deluxe Room • Pool • Breakfast • City View",
-    sqm: 35,
-    guests: 2,
-  },
-  {
-    id: 2,
-    name: "Shangri-La Mactan",
-    image:
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?q=80&w=1200&auto=format&fit=crop",
-    rating: 4.9,
-    details: "Ocean View • Beach Access • Breakfast",
-    sqm: 45,
-    guests: 3,
-  },
-  {
-    id: 3,
-    name: "Quest Hotel Cebu",
-    image:
-      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=1200&auto=format&fit=crop",
-    rating: 4.3,
-    details: "Standard Room • WiFi • City Center",
-    sqm: 28,
-    guests: 2,
-  },
-];
-
 /* ===================== MAIN ===================== */
 export default function DashboardPage() {
   const router = useRouter();
@@ -130,6 +101,8 @@ export default function DashboardPage() {
 
   const [index, setIndex] = useState(0);
   const [hotelIndex, setHotelIndex] = useState(0);
+  const [listings, setListings] = useState<DashboardListing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
 
   /* ===================== TERMS ===================== */
   useEffect(() => {
@@ -169,6 +142,35 @@ export default function DashboardPage() {
     fetchUser();
   }, []);
 
+  /* ===================== ADMIN POSTS (HOTELS & ROOMS) ===================== */
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        setListingsLoading(true);
+        const [hotelsRes, roomsRes] = await Promise.all([
+          fetch("/api/hotels"),
+          fetch("/api/rooms"),
+        ]);
+
+        const hotels = hotelsRes.ok
+          ? (await hotelsRes.json()).hotels || []
+          : [];
+        const rooms = roomsRes.ok ? (await roomsRes.json()).rooms || [] : [];
+
+        const built = buildDashboardListings(hotels, rooms);
+        setListings(built);
+        setHotelIndex(0);
+      } catch (error) {
+        console.error("Error fetching listings:", error);
+        setListings([]);
+      } finally {
+        setListingsLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
+
   /* ===================== BOOKINGS ===================== */
   useEffect(() => {
     const fetchBookings = async () => {
@@ -193,7 +195,11 @@ export default function DashboardPage() {
   }, []);
 
   const booking = currentBookings[index];
-  const selectedHotel = cebuHotels[hotelIndex];
+  const selectedHotel = listings[hotelIndex];
+  const sectionTitle =
+    listings.length > 0 && listings[0].kind === "hotel"
+      ? "Featured Hotels"
+      : "Featured Hotels & Rooms";
 
   return (
     <>
@@ -204,10 +210,7 @@ export default function DashboardPage() {
       {showLogout && (
         <LogoutModal
           onCancel={() => setShowLogout(false)}
-          onConfirm={async () => {
-            await supabase.auth.signOut();
-            router.push("/login");
-          }}
+          onConfirm={() => logoutUser(router)}
         />
       )}
 
@@ -307,68 +310,69 @@ export default function DashboardPage() {
             Welcome, {userName || "User"}
           </h1>
 
-          {/* ===================== CEBU HOTELS ===================== */}
+          {/* ===================== FEATURED LISTINGS ===================== */}
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-bold">
-              Cebu Hotels
-            </h2>
+            <h2 className="text-xl font-bold">{sectionTitle}</h2>
           </div>
 
-          <div className="relative bg-white rounded-2xl shadow p-5 mb-10">
-            <button
-              onClick={() =>
-                setHotelIndex((prev) =>
-                  prev === 0
-                    ? cebuHotels.length - 1
-                    : prev - 1
-                )
-              }
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white shadow px-3 py-1 rounded-full text-2xl"
-            >
-              ‹
-            </button>
-
-            <button
-              onClick={() =>
-                setHotelIndex((prev) =>
-                  prev === cebuHotels.length - 1
-                    ? 0
-                    : prev + 1
-                )
-              }
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white shadow px-3 py-1 rounded-full text-2xl"
-            >
-              ›
-            </button>
-
-            <img
-              src={selectedHotel.image}
-              className="w-full h-72 object-cover rounded-xl"
-            />
-
-            <div className="mt-4">
-              <h3 className="text-2xl font-bold">
-                {selectedHotel.name}
-              </h3>
-
-              <p className="text-gray-700 mt-2">
-                {selectedHotel.details}
-              </p>
-
-              <div className="flex gap-5 mt-3 text-sm text-gray-700">
-                <p>⭐ {selectedHotel.rating}</p>
-                <p>{selectedHotel.sqm} sqm</p>
-                <p>{selectedHotel.guests} Guests</p>
-              </div>
+          {listingsLoading ? (
+            <div className="bg-white rounded-2xl shadow p-10 mb-10 text-center text-gray-500">
+              Loading hotels and rooms...
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow p-10 mb-10 text-center text-gray-500">
+              No hotels or rooms posted yet. Check back after an admin adds listings.
+            </div>
+          ) : (
+            <div className="relative bg-white rounded-2xl shadow p-5 mb-10">
+              <button
+                onClick={() =>
+                  setHotelIndex((prev) =>
+                    prev === 0 ? listings.length - 1 : prev - 1
+                  )
+                }
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white shadow px-3 py-1 rounded-full text-2xl"
+              >
+                ‹
+              </button>
 
               <button
-                onClick={() => router.push(selectedHotel?.id ? `/hotels/${selectedHotel.id}` : "#")}
-                className="mt-5 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+                onClick={() =>
+                  setHotelIndex((prev) =>
+                    prev === listings.length - 1 ? 0 : prev + 1
+                  )
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white shadow px-3 py-1 rounded-full text-2xl"
               >
-                Book Now!
+                ›
               </button>
+
+              <img
+                src={selectedHotel.image}
+                alt={selectedHotel.name}
+                className="w-full h-72 object-cover rounded-xl"
+              />
+
+              <div className="mt-4">
+                <h3 className="text-2xl font-bold">{selectedHotel.name}</h3>
+
+                <p className="text-gray-700 mt-2">{selectedHotel.details}</p>
+
+                <div className="flex gap-5 mt-3 text-sm text-gray-700">
+                  <p>⭐ {selectedHotel.rating}</p>
+                  <p>{selectedHotel.sqm} sqm</p>
+                  <p>{selectedHotel.guests} Guests</p>
+                </div>
+
+                <button
+                  onClick={() => router.push(selectedHotel.bookLink)}
+                  className="mt-5 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Book Now!
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* ===================== BOOKING HISTORY ===================== */}
           <div className="flex justify-between items-center mb-3">

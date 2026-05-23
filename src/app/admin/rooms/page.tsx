@@ -103,7 +103,8 @@ export default function RoomManagement() {
         setShowForm(false);
         fetchRooms();
       } else {
-        alert('Failed to add room');
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || 'Failed to add room');
       }
     } catch (error) {
       console.error('Error adding room:', error);
